@@ -1,0 +1,37 @@
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f5f5f5;
+}
+
+.app{
+  padding:30px;
+}
+
+.upload-btn{
+  background:#1976d2;
+  color:white;
+  padding:12px 20px;
+  border-radius:10px;
+  cursor:pointer;
+  display:inline-block;
+  margin-bottom:20px;
+}
+
+.orders{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:20px;
+}
+
+.order-card{
+  background:white;
+  border-radius:12px;
+  padding:20px;
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+}
+
+select{
+  width:100%;
+  padding:10px;
+}
