@@ -1,97 +1,113 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { readPdf } from "./utils/pdfReader";
+import { parseOrder } from "./utils/parser";
 
 function App() {
-  const [pdfs, setPdfs] = useState([]);
+  const [orders, setOrders] = useState(() => {
+    const saved = localStorage.getItem("orders");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("orders", JSON.stringify(orders));
+  }, [orders]);
 
   const handleFiles = async (e) => {
-    const files = Array.from(e.target.files);
+  const files = Array.from(e.target.files);
+  const result = [];
 
-    const orders = [];
+  for (const file of files) {
+    const text = await readPdf(file);
 
-    for (const file of files) {
-      const text = await readPdf(file);
+    const data = parseOrder(text);
 
-      console.log(text);
+    // حفظ الملف داخل Documents/Taha Dispatch
+    const buffer = await file.arrayBuffer();
 
-      // رقم الطلبية
-      const orderNumber =
-        text.match(/07\/\d+/)?.[0] || "לא נמצא";
+    const savedPath = await window.electronAPI.savePdf(
+      Array.from(new Uint8Array(buffer)),
+      file.name
+    );
 
-      // اسم الزبون
-      const customerMatch = text.match(
-        /מספרכם:[\s\S]*?04\s+([\u0590-\u05FFA-Za-z0-9"׳״\s]+?)\s+הזמנה/
-      );
+    result.push({
+      customer: data.customer,
+      orderNumber: data.orderNumber,
+      pdf: savedPath,
+    });
+  }
 
-      const customer = customerMatch
-        ? customerMatch[1].trim()
-        : "לקוח לא נמצא";
+  setOrders((prev) => [...prev, ...result]);
+};
 
-      orders.push({
-        orderNumber,
-        customer,
-        file: URL.createObjectURL(file),
-      });
-    }
-
-    setPdfs((prev) => [...prev, ...orders]);
+  const deleteOrder = (index) => {
+    const newOrders = orders.filter((_, i) => i !== index);
+    setOrders(newOrders);
   };
 
   return (
     <div
-      className="app"
       style={{
-        padding: "40px",
         background: "#f5f5f5",
         minHeight: "100vh",
-        textAlign: "center",
+        padding: "30px",
+        fontFamily: "Arial",
       }}
     >
-      <h1>🚛 מערכת סידור משאיות</h1>
+      <h1 style={{ textAlign: "center" }}>
+        🚛 מערכת סידור משאיות
+      </h1>
 
-      <br />
+      <div style={{ textAlign: "center", marginBottom: 30 }}>
+        <input
+          type="file"
+          multiple
+          accept=".pdf"
+          onChange={handleFiles}
+        />
+      </div>
 
-      <input
-        type="file"
-        multiple
-        accept="application/pdf"
-        onChange={handleFiles}
-      />
-
-      <br />
-      <br />
-
-      {pdfs.map((pdf, index) => (
+      {orders.map((order, index) => (
         <div
           key={index}
-          onClick={() => window.open(pdf.file)}
           style={{
             background: "white",
-            borderRadius: "15px",
-            padding: "20px",
-            margin: "20px auto",
-            width: "500px",
-            cursor: "pointer",
-            boxShadow: "0 5px 15px rgba(0,0,0,.15)",
+            borderRadius: 15,
+            padding: 20,
+            marginBottom: 20,
+            boxShadow: "0 2px 10px rgba(0,0,0,.15)",
           }}
         >
-          <h2>📄 {pdf.orderNumber}</h2>
+          <h2>📄 {order.orderNumber}</h2>
 
-          <h3>👤 {pdf.customer}</h3>
+          <h3>👤 {order.customer}</h3>
 
-          <button
-            style={{
-              marginTop: "15px",
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "10px",
-              background: "#1976d2",
-              color: "white",
-              cursor: "pointer",
-            }}
-          >
-            פתח הזמנה
-          </button>
+          <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
+            <button
+              onClick={() => window.electronAPI.openPdf(order.pdf)}
+              style={{
+                padding: "10px 20px",
+                border: "none",
+                borderRadius: 8,
+                cursor: "pointer",
+              }}
+            >
+              פתח הזמנה
+            </button>
+
+            <button
+              onClick={() => deleteOrder(index)}
+              style={{
+                padding: "10px 20px",
+                border: "none",
+                borderRadius: 8,
+                background: "#d32f2f",
+                color: "white",
+                cursor: "pointer",
+              }}
+            >
+              מחק
+            </button>
+          </div>
         </div>
       ))}
     </div>

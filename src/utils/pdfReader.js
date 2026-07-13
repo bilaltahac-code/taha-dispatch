@@ -1,10 +1,9 @@
 import * as pdfjsLib from "pdfjs-dist";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
-    import.meta.url
-  ).toString();
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 export async function readPdf(file) {
   const arrayBuffer = await file.arrayBuffer();
@@ -19,7 +18,10 @@ export async function readPdf(file) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
 
-    text += content.items.map((item) => item.str).join(" ");
+    text +=
+      content.items
+        .map((item) => item.str)
+        .join(" ") + "\n";
   }
 
   return text;
