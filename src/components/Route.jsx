@@ -11,7 +11,7 @@ export default function Route({
   onDeleteRoute,
   onDropOrder,
   onRemoveOrder,
-  onCompleteOrder,
+  onToggleDispatched,
 }) {
   const handleDrop = (event) => {
     event.preventDefault();
@@ -131,24 +131,68 @@ export default function Route({
                 handleOrderDragStart(event, order.id)
               }
               style={{
-                background: "white",
-                border: "1px solid #ddd",
+                background: order.dispatched
+                  ? "#e8f5e9"
+                  : "white",
+                border: order.dispatched
+                  ? "2px solid #43a047"
+                  : "1px solid #ddd",
                 borderRadius: 8,
                 padding: 10,
                 marginBottom: 8,
                 cursor: "grab",
               }}
             >
-              <b>{order.orderNumber}</b>
+              <div
+                style={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  color: "#1976d2",
+                }}
+              >
+                {order.orderNumber}
+              </div>
 
               <div
                 style={{
-                  marginTop: 5,
-                  color: "#555",
+                  marginTop: 6,
+                  color: "#444",
+                  fontSize: 15,
                 }}
               >
                 {order.customer}
               </div>
+
+              <div
+                style={{
+                  marginTop: 8,
+                  color: order.destination
+                    ? "#1f2937"
+                    : "#999",
+                  fontSize: 15,
+                  fontWeight: order.destination
+                    ? "bold"
+                    : "normal",
+                }}
+              >
+                📍 {order.destination || "לא הוגדר יעד"}
+              </div>
+
+              {order.dispatched && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    padding: 7,
+                    borderRadius: 6,
+                    background: "#c8e6c9",
+                    color: "#1b5e20",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                  }}
+                >
+                  🚚 ההזמנה יצאה
+                </div>
+              )}
 
               <button
                 type="button"
@@ -162,6 +206,7 @@ export default function Route({
                   background: "#43a047",
                   color: "white",
                   cursor: "pointer",
+                  fontWeight: "bold",
                 }}
               >
                 📄 פתח הזמנה
@@ -169,20 +214,26 @@ export default function Route({
 
               <button
                 type="button"
-                onClick={() => onCompleteOrder(order.id)}
+                onClick={() =>
+                  onToggleDispatched(order.id)
+                }
                 style={{
                   marginTop: 8,
                   width: "100%",
                   padding: 8,
                   border: "none",
                   borderRadius: 6,
-                  background: "#1976d2",
+                  background: order.dispatched
+                    ? "#757575"
+                    : "#1976d2",
                   color: "white",
                   cursor: "pointer",
                   fontWeight: "bold",
                 }}
               >
-                ✅ סמן כהושלם
+                {order.dispatched
+                  ? "↩️ בטל יציאה"
+                  : "🚚 ההזמנה יצאה"}
               </button>
 
               <button

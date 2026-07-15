@@ -5,8 +5,14 @@ import "./Sidebar.css";
 export default function Sidebar({
   orders,
   onSelectFiles,
+  onDeleteOrder,
+  onUpdateOrder,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingOrderId, setEditingOrderId] = useState(null);
+  const [editOrderNumber, setEditOrderNumber] = useState("");
+  const [editCustomer, setEditCustomer] = useState("");
+  const [editDestination, setEditDestination] = useState("");
 
   const filteredOrders = useMemo(() => {
     const normalizedSearch = searchTerm
@@ -26,9 +32,14 @@ export default function Sidebar({
         order.customer || ""
       ).toLowerCase();
 
+      const destination = String(
+        order.destination || ""
+      ).toLowerCase();
+
       return (
         orderNumber.includes(normalizedSearch) ||
-        customer.includes(normalizedSearch)
+        customer.includes(normalizedSearch) ||
+        destination.includes(normalizedSearch)
       );
     });
   }, [orders, searchTerm]);
@@ -41,6 +52,55 @@ export default function Sidebar({
     );
     event.dataTransfer.setData("sourceTruckId", "");
     event.dataTransfer.setData("sourceRouteId", "");
+  };
+
+  const startEditing = (order) => {
+    setEditingOrderId(order.id);
+    setEditOrderNumber(order.orderNumber || "");
+    setEditCustomer(order.customer || "");
+    setEditDestination(order.destination || "");
+  };
+
+  const cancelEditing = () => {
+    setEditingOrderId(null);
+    setEditOrderNumber("");
+    setEditCustomer("");
+    setEditDestination("");
+  };
+
+  const saveEditing = (orderId) => {
+    const normalizedOrderNumber = editOrderNumber.trim();
+    const normalizedCustomer = editCustomer.trim();
+    const normalizedDestination = editDestination.trim();
+
+    if (!normalizedOrderNumber || !normalizedCustomer) {
+      window.alert("יש להזין מספר הזמנה ושם לקוח");
+      return;
+    }
+
+    onUpdateOrder(orderId, {
+      orderNumber: normalizedOrderNumber,
+      customer: normalizedCustomer,
+      destination: normalizedDestination,
+    });
+
+    cancelEditing();
+  };
+
+  const handleDelete = (order) => {
+    const confirmed = window.confirm(
+      `למחוק את הזמנה ${order.orderNumber}?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    onDeleteOrder(order.id);
+
+    if (editingOrderId === order.id) {
+      cancelEditing();
+    }
   };
 
   return (
@@ -88,7 +148,7 @@ export default function Sidebar({
           onChange={(event) =>
             setSearchTerm(event.target.value)
           }
-          placeholder="חיפוש לפי מספר או לקוח..."
+          placeholder="חיפוש לפי מספר, לקוח או יעד..."
           style={{
             width: "100%",
             marginTop: 12,
@@ -146,51 +206,254 @@ export default function Sidebar({
             </div>
           )}
 
-        {filteredOrders.map((order) => (
-          <div
-            key={order.id}
-            draggable
-            onDragStart={(event) =>
-              handleDragStart(event, order.id)
-            }
-            style={{
-              background: "#fafafa",
-              border: "1px solid #ddd",
-              borderRadius: 10,
-              padding: 12,
-              marginBottom: 10,
-              cursor: "grab",
-            }}
-          >
-            <b>{order.orderNumber}</b>
+        {filteredOrders.map((order) => {
+          const isEditing = editingOrderId === order.id;
 
+          return (
             <div
+              key={order.id}
+              draggable={!isEditing}
+              onDragStart={(event) =>
+                handleDragStart(event, order.id)
+              }
               style={{
-                marginTop: 6,
-                color: "#555",
+                background: "#fafafa",
+                border: "1px solid #ddd",
+                borderRadius: 10,
+                padding: 12,
+                marginBottom: 10,
+                cursor: isEditing ? "default" : "grab",
               }}
             >
-              {order.customer}
-            </div>
+              {isEditing ? (
+                <>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 5,
+                      fontSize: 13,
+                      fontWeight: "bold",
+                      color: "#555",
+                    }}
+                  >
+                    מספר הזמנה
+                  </label>
 
-            <button
-              type="button"
-              onClick={() => window.open(order.pdf)}
-              style={{
-                marginTop: 10,
-                width: "100%",
-                padding: 8,
-                border: "none",
-                borderRadius: 6,
-                background: "#43a047",
-                color: "white",
-                cursor: "pointer",
-              }}
-            >
-              📄 פתח הזמנה
-            </button>
-          </div>
-        ))}
+                  <input
+                    type="text"
+                    value={editOrderNumber}
+                    onChange={(event) =>
+                      setEditOrderNumber(event.target.value)
+                    }
+                    style={{
+                      width: "100%",
+                      padding: 9,
+                      border: "1px solid #ccc",
+                      borderRadius: 6,
+                      boxSizing: "border-box",
+                      fontFamily: "inherit",
+                    }}
+                  />
+
+                  <label
+                    style={{
+                      display: "block",
+                      marginTop: 10,
+                      marginBottom: 5,
+                      fontSize: 13,
+                      fontWeight: "bold",
+                      color: "#555",
+                    }}
+                  >
+                    שם לקוח
+                  </label>
+
+                  <input
+                    type="text"
+                    value={editCustomer}
+                    onChange={(event) =>
+                      setEditCustomer(event.target.value)
+                    }
+                    style={{
+                      width: "100%",
+                      padding: 9,
+                      border: "1px solid #ccc",
+                      borderRadius: 6,
+                      boxSizing: "border-box",
+                      fontFamily: "inherit",
+                    }}
+                  />
+
+                  <label
+                    style={{
+                      display: "block",
+                      marginTop: 10,
+                      marginBottom: 5,
+                      fontSize: 13,
+                      fontWeight: "bold",
+                      color: "#555",
+                    }}
+                  >
+                    יעד
+                  </label>
+
+                  <input
+                    type="text"
+                    value={editDestination}
+                    onChange={(event) =>
+                      setEditDestination(event.target.value)
+                    }
+                    placeholder="לאן ההזמנה יוצאת?"
+                    style={{
+                      width: "100%",
+                      padding: 9,
+                      border: "1px solid #ccc",
+                      borderRadius: 6,
+                      boxSizing: "border-box",
+                      fontFamily: "inherit",
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 8,
+                      marginTop: 10,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => saveEditing(order.id)}
+                      style={{
+                        padding: 8,
+                        border: "none",
+                        borderRadius: 6,
+                        background: "#1976d2",
+                        color: "white",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      שמור
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={cancelEditing}
+                      style={{
+                        padding: 8,
+                        border: "none",
+                        borderRadius: 6,
+                        background: "#757575",
+                        color: "white",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      ביטול
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      fontSize: 19,
+                      fontWeight: "bold",
+                      color: "#1976d2",
+                    }}
+                  >
+                    {order.orderNumber}
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 7,
+                      color: "#444",
+                      fontSize: 16,
+                    }}
+                  >
+                    {order.customer}
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 9,
+                      color: order.destination
+                        ? "#1f2937"
+                        : "#999",
+                      fontSize: 15,
+                      fontWeight: order.destination
+                        ? "bold"
+                        : "normal",
+                    }}
+                  >
+                    📍 {order.destination || "לא הוגדר יעד"}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => window.open(order.pdf)}
+                    style={{
+                      marginTop: 12,
+                      width: "100%",
+                      padding: 8,
+                      border: "none",
+                      borderRadius: 6,
+                      background: "#43a047",
+                      color: "white",
+                      cursor: "pointer",
+                    }}
+                  >
+                    📄 פתח הזמנה
+                  </button>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 8,
+                      marginTop: 8,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => startEditing(order)}
+                      style={{
+                        padding: 8,
+                        border: "none",
+                        borderRadius: 6,
+                        background: "#f9a825",
+                        color: "white",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      ✏️ ערוך
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(order)}
+                      style={{
+                        padding: 8,
+                        border: "none",
+                        borderRadius: 6,
+                        background: "#e53935",
+                        color: "white",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      🗑️ מחק
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

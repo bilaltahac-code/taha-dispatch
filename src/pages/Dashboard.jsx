@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import DayTabs from "../components/DayTabs";
 import Sidebar from "../components/Sidebar";
 import Truck from "../components/Truck";
+import DestinationModal from "../components/DestinationModal";
 import CompletedOrders from "./CompletedOrders";
 
 import { readPdf } from "../utils/pdfReader";
@@ -25,46 +26,110 @@ export default function Dashboard() {
 
   const [selectedDate, setSelectedDate] = useState(createTodayKey);
   const [currentPage, setCurrentPage] = useState("dispatch");
+  const [pendingOrders, setPendingOrders] = useState([]);
+  const [destinationInput, setDestinationInput] = useState("");
 
   const {
     orders,
     setOrders,
     trucks,
     completedOrders,
+    restoreCompletedOrder,
+    deleteOrder,
+    updateOrder,
     addTruck,
     addRoute,
     deleteRoute,
     moveRoute,
     dropOrder,
     removeOrder,
-    completeOrder,
+    toggleOrderDispatched,
+    finishDay,
   } = useDispatch(selectedDate);
+
+  const currentPendingOrder = pendingOrders[0] || null;
 
   const handleFiles = async (event) => {
     const files = Array.from(event.target.files || []);
-    const newOrders = [];
+    const parsedOrders = [];
 
     for (const file of files) {
       try {
         const text = await readPdf(file);
         const data = parseOrder(text);
 
-        newOrders.push({
+        parsedOrders.push({
           id: crypto.randomUUID(),
           orderNumber: data.orderNumber,
           customer: data.customer,
+          destination: "",
           pdf: URL.createObjectURL(file),
         });
       } catch (error) {
         console.error("Failed to read PDF:", error);
+        window.alert(`לא ניתן לקרוא את הקובץ: ${file.name}`);
       }
     }
 
-    if (newOrders.length > 0) {
-      setOrders((prev) => [...prev, ...newOrders]);
+    if (parsedOrders.length > 0) {
+      setPendingOrders((prev) => [
+        ...prev,
+        ...parsedOrders,
+      ]);
     }
 
     event.target.value = "";
+  };
+
+  const confirmPendingOrder = () => {
+    if (!currentPendingOrder) {
+      return;
+    }
+
+    const completedOrder = {
+      ...currentPendingOrder,
+      destination: destinationInput.trim(),
+    };
+
+    setOrders((prev) => [...prev, completedOrder]);
+    setPendingOrders((prev) => prev.slice(1));
+    setDestinationInput("");
+  };
+
+  const handleFinishDay = () => {
+    const dispatchedCount = trucks.reduce(
+      (total, truck) =>
+        total +
+        truck.routes.reduce(
+          (routeTotal, route) =>
+            routeTotal +
+            route.orders.filter(
+              (order) => Boolean(order.dispatched)
+            ).length,
+          0
+        ),
+      0
+    );
+
+    if (dispatchedCount === 0) {
+      window.alert("אין הזמנות שסומנו כיצאו");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `לסיים את היום ולהעביר ${dispatchedCount} הזמנות להיסטוריה?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    finishDay();
+  };
+
+  const handleRestoreOrder = (orderId) => {
+    restoreCompletedOrder(orderId);
+    setCurrentPage("dispatch");
   };
 
   if (currentPage === "completed") {
@@ -72,6 +137,7 @@ export default function Dashboard() {
       <CompletedOrders
         completedOrders={completedOrders}
         onBack={() => setCurrentPage("dispatch")}
+        onRestoreOrder={handleRestoreOrder}
       />
     );
   }
@@ -112,6 +178,8 @@ export default function Dashboard() {
         <Sidebar
           orders={orders}
           onSelectFiles={() => fileInputRef.current?.click()}
+          onDeleteOrder={deleteOrder}
+          onUpdateOrder={updateOrder}
         />
 
         <div
@@ -121,24 +189,48 @@ export default function Dashboard() {
             overflow: "auto",
           }}
         >
-          <button
-            type="button"
-            onClick={() => setCurrentPage("completed")}
+          <div
             style={{
-              width: "100%",
-              padding: 13,
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
               marginBottom: 20,
-              border: "none",
-              borderRadius: 10,
-              background: "#43a047",
-              color: "white",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: 16,
             }}
           >
-            ✅ הזמנות שהושלמו ({completedOrders.length})
-          </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage("completed")}
+              style={{
+                padding: 13,
+                border: "none",
+                borderRadius: 10,
+                background: "#43a047",
+                color: "white",
+                cursor: "pointer",
+                fontWeight: "bold",
+                fontSize: 16,
+              }}
+            >
+              ✅ הזמנות שהושלמו ({completedOrders.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={handleFinishDay}
+              style={{
+                padding: 13,
+                border: "none",
+                borderRadius: 10,
+                background: "#263238",
+                color: "white",
+                cursor: "pointer",
+                fontWeight: "bold",
+                fontSize: 16,
+              }}
+            >
+              🌙 סיים יום עבודה
+            </button>
+          </div>
 
           {trucks.map((truck) => (
             <Truck
@@ -149,7 +241,7 @@ export default function Dashboard() {
               onMoveRoute={moveRoute}
               onDropOrder={dropOrder}
               onRemoveOrder={removeOrder}
-              onCompleteOrder={completeOrder}
+              onToggleDispatched={toggleOrderDispatched}
             />
           ))}
 
@@ -172,6 +264,14 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+
+      <DestinationModal
+        order={currentPendingOrder}
+        destination={destinationInput}
+        pendingCount={pendingOrders.length}
+        onDestinationChange={setDestinationInput}
+        onConfirm={confirmPendingOrder}
+      />
     </div>
   );
 }

@@ -8,7 +8,7 @@ export default function Truck({
   onMoveRoute,
   onDropOrder,
   onRemoveOrder,
-  onCompleteOrder,
+  onToggleDispatched,
 }) {
   return (
     <div
@@ -63,8 +63,12 @@ export default function Truck({
           onRemoveOrder={(orderId) =>
             onRemoveOrder(orderId, truck.id, route.id)
           }
-          onCompleteOrder={(orderId) =>
-            onCompleteOrder(orderId, truck.id, route.id)
+          onToggleDispatched={(orderId) =>
+            onToggleDispatched(
+              orderId,
+              truck.id,
+              route.id
+            )
           }
         />
       ))}

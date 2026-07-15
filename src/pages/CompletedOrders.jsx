@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 export default function CompletedOrders({
   completedOrders,
   onBack,
+  onRestoreOrder,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTruck, setSelectedTruck] = useState("all");
@@ -66,10 +67,15 @@ export default function CompletedOrders({
         order.customer || ""
       ).toLowerCase();
 
+      const destination = String(
+        order.destination || ""
+      ).toLowerCase();
+
       const matchesSearch =
         !normalizedSearch ||
         orderNumber.includes(normalizedSearch) ||
-        customer.includes(normalizedSearch);
+        customer.includes(normalizedSearch) ||
+        destination.includes(normalizedSearch);
 
       const matchesTruck =
         selectedTruck === "all" ||
@@ -92,6 +98,18 @@ export default function CompletedOrders({
     setSearchTerm("");
     setSelectedTruck("all");
     setSelectedDate("");
+  };
+
+  const handleRestoreOrder = (order) => {
+    const confirmed = window.confirm(
+      `להחזיר את הזמנה ${order.orderNumber} לסידור?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    onRestoreOrder(order.id);
   };
 
   const hasActiveFilters =
@@ -196,7 +214,7 @@ export default function CompletedOrders({
               onChange={(event) =>
                 setSearchTerm(event.target.value)
               }
-              placeholder="מספר הזמנה או שם לקוח..."
+              placeholder="מספר, לקוח או יעד..."
               style={{
                 width: "100%",
                 padding: 11,
@@ -377,6 +395,21 @@ export default function CompletedOrders({
 
                 <div
                   style={{
+                    marginTop: 9,
+                    color: order.destination
+                      ? "#1f2937"
+                      : "#999",
+                    fontWeight: order.destination
+                      ? "bold"
+                      : "normal",
+                  }}
+                >
+                  📍 יעד:{" "}
+                  {order.destination || "לא הוגדר יעד"}
+                </div>
+
+                <div
+                  style={{
                     marginTop: 16,
                     color: "#555",
                     lineHeight: 1.9,
@@ -420,6 +453,24 @@ export default function CompletedOrders({
                     📄 פתח הזמנה
                   </button>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => handleRestoreOrder(order)}
+                  style={{
+                    marginTop: 10,
+                    width: "100%",
+                    padding: 10,
+                    border: "none",
+                    borderRadius: 8,
+                    background: "#1976d2",
+                    color: "white",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                  }}
+                >
+                  ↩️ החזר לסידור
+                </button>
               </div>
             ))}
           </div>
