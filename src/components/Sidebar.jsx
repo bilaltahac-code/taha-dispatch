@@ -1,6 +1,48 @@
+import { useMemo, useState } from "react";
+
 import "./Sidebar.css";
 
-export default function Sidebar({ orders, onSelectFiles }) {
+export default function Sidebar({
+  orders,
+  onSelectFiles,
+}) {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredOrders = useMemo(() => {
+    const normalizedSearch = searchTerm
+      .trim()
+      .toLowerCase();
+
+    if (!normalizedSearch) {
+      return orders;
+    }
+
+    return orders.filter((order) => {
+      const orderNumber = String(
+        order.orderNumber || ""
+      ).toLowerCase();
+
+      const customer = String(
+        order.customer || ""
+      ).toLowerCase();
+
+      return (
+        orderNumber.includes(normalizedSearch) ||
+        customer.includes(normalizedSearch)
+      );
+    });
+  }, [orders, searchTerm]);
+
+  const handleDragStart = (event, orderId) => {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData(
+      "orderId",
+      String(orderId)
+    );
+    event.dataTransfer.setData("sourceTruckId", "");
+    event.dataTransfer.setData("sourceRouteId", "");
+  };
+
   return (
     <div
       style={{
@@ -18,9 +60,12 @@ export default function Sidebar({ orders, onSelectFiles }) {
           borderBottom: "1px solid #eee",
         }}
       >
-        <h2 style={{ margin: 0 }}>📄 הזמנות חדשות</h2>
+        <h2 style={{ margin: 0 }}>
+          📄 הזמנות חדשות
+        </h2>
 
         <button
+          type="button"
           onClick={onSelectFiles}
           style={{
             width: "100%",
@@ -36,6 +81,37 @@ export default function Sidebar({ orders, onSelectFiles }) {
         >
           ➕ הוסף הזמנות
         </button>
+
+        <input
+          type="search"
+          value={searchTerm}
+          onChange={(event) =>
+            setSearchTerm(event.target.value)
+          }
+          placeholder="חיפוש לפי מספר או לקוח..."
+          style={{
+            width: "100%",
+            marginTop: 12,
+            padding: 11,
+            border: "1px solid #d5d9dd",
+            borderRadius: 8,
+            outline: "none",
+            fontFamily: "inherit",
+            fontSize: 14,
+            boxSizing: "border-box",
+          }}
+        />
+
+        <div
+          style={{
+            marginTop: 10,
+            color: "#777",
+            fontSize: 13,
+          }}
+        >
+          נמצאו {filteredOrders.length} מתוך{" "}
+          {orders.length} הזמנות
+        </div>
       </div>
 
       <div
@@ -57,12 +133,25 @@ export default function Sidebar({ orders, onSelectFiles }) {
           </div>
         )}
 
-        {orders.map((order) => (
+        {orders.length > 0 &&
+          filteredOrders.length === 0 && (
+            <div
+              style={{
+                textAlign: "center",
+                color: "#888",
+                marginTop: 40,
+              }}
+            >
+              לא נמצאו הזמנות
+            </div>
+          )}
+
+        {filteredOrders.map((order) => (
           <div
             key={order.id}
             draggable
-            onDragStart={(e) =>
-              e.dataTransfer.setData("orderId", order.id)
+            onDragStart={(event) =>
+              handleDragStart(event, order.id)
             }
             style={{
               background: "#fafafa",
@@ -85,6 +174,7 @@ export default function Sidebar({ orders, onSelectFiles }) {
             </div>
 
             <button
+              type="button"
               onClick={() => window.open(order.pdf)}
               style={{
                 marginTop: 10,

@@ -2,9 +2,51 @@ import "./Route.css";
 
 export default function Route({
   route,
+  truckId,
+  canDelete,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+  onDeleteRoute,
   onDropOrder,
   onRemoveOrder,
+  onCompleteOrder,
 }) {
+  const handleDrop = (event) => {
+    event.preventDefault();
+
+    const orderId = event.dataTransfer.getData("orderId");
+    const sourceTruckId =
+      event.dataTransfer.getData("sourceTruckId");
+    const sourceRouteId =
+      event.dataTransfer.getData("sourceRouteId");
+
+    if (!orderId) {
+      return;
+    }
+
+    onDropOrder(
+      orderId,
+      route.id,
+      sourceTruckId,
+      sourceRouteId
+    );
+  };
+
+  const handleOrderDragStart = (event, orderId) => {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("orderId", String(orderId));
+    event.dataTransfer.setData(
+      "sourceTruckId",
+      String(truckId || "")
+    );
+    event.dataTransfer.setData(
+      "sourceRouteId",
+      String(route.id)
+    );
+  };
+
   return (
     <div style={{ marginBottom: 20 }}>
       <div
@@ -18,21 +60,50 @@ export default function Route({
         <b>📍 {route.name}</b>
 
         <div style={{ display: "flex", gap: 5 }}>
-          <button>⬆️</button>
-          <button>⬇️</button>
-          <button>🗑️</button>
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
+            style={{
+              cursor: canMoveUp ? "pointer" : "not-allowed",
+              opacity: canMoveUp ? 1 : 0.3,
+            }}
+          >
+            ⬆️
+          </button>
+
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
+            style={{
+              cursor: canMoveDown
+                ? "pointer"
+                : "not-allowed",
+              opacity: canMoveDown ? 1 : 0.3,
+            }}
+          >
+            ⬇️
+          </button>
+
+          {canDelete && (
+            <button
+              type="button"
+              onClick={onDeleteRoute}
+              style={{ cursor: "pointer" }}
+            >
+              🗑️
+            </button>
+          )}
         </div>
       </div>
 
       <div
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-          e.preventDefault();
-
-          const orderId = e.dataTransfer.getData("orderId");
-
-          onDropOrder(orderId, route.id);
+        onDragOver={(event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
         }}
+        onDrop={handleDrop}
         style={{
           minHeight: 100,
           border: "2px dashed #cfcfcf",
@@ -55,12 +126,17 @@ export default function Route({
           route.orders.map((order) => (
             <div
               key={order.id}
+              draggable
+              onDragStart={(event) =>
+                handleOrderDragStart(event, order.id)
+              }
               style={{
                 background: "white",
                 border: "1px solid #ddd",
                 borderRadius: 8,
                 padding: 10,
                 marginBottom: 8,
+                cursor: "grab",
               }}
             >
               <b>{order.orderNumber}</b>
@@ -75,6 +151,7 @@ export default function Route({
               </div>
 
               <button
+                type="button"
                 onClick={() => window.open(order.pdf)}
                 style={{
                   marginTop: 10,
@@ -91,6 +168,25 @@ export default function Route({
               </button>
 
               <button
+                type="button"
+                onClick={() => onCompleteOrder(order.id)}
+                style={{
+                  marginTop: 8,
+                  width: "100%",
+                  padding: 8,
+                  border: "none",
+                  borderRadius: 6,
+                  background: "#1976d2",
+                  color: "white",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                }}
+              >
+                ✅ סמן כהושלם
+              </button>
+
+              <button
+                type="button"
                 onClick={() => onRemoveOrder(order.id)}
                 style={{
                   marginTop: 8,

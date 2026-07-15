@@ -4,8 +4,11 @@ import Route from "./Route";
 export default function Truck({
   truck,
   onAddRoute,
+  onDeleteRoute,
+  onMoveRoute,
   onDropOrder,
   onRemoveOrder,
+  onCompleteOrder,
 }) {
   return (
     <div
@@ -26,20 +29,48 @@ export default function Truck({
         🚚 {truck.name}
       </h2>
 
-      {truck.routes.map((route) => (
+      {truck.routes.map((route, index) => (
         <Route
           key={route.id}
           route={route}
-          onDropOrder={(orderId, routeId) =>
-            onDropOrder(orderId, truck.id, routeId)
+          truckId={truck.id}
+          canDelete={index !== 0}
+          canMoveUp={index > 0}
+          canMoveDown={index < truck.routes.length - 1}
+          onMoveUp={() =>
+            onMoveRoute(truck.id, route.id, "up")
+          }
+          onMoveDown={() =>
+            onMoveRoute(truck.id, route.id, "down")
+          }
+          onDeleteRoute={() =>
+            onDeleteRoute(truck.id, route.id)
+          }
+          onDropOrder={(
+            orderId,
+            routeId,
+            sourceTruckId,
+            sourceRouteId
+          ) =>
+            onDropOrder(
+              orderId,
+              truck.id,
+              routeId,
+              sourceTruckId,
+              sourceRouteId
+            )
           }
           onRemoveOrder={(orderId) =>
             onRemoveOrder(orderId, truck.id, route.id)
+          }
+          onCompleteOrder={(orderId) =>
+            onCompleteOrder(orderId, truck.id, route.id)
           }
         />
       ))}
 
       <button
+        type="button"
         onClick={() => onAddRoute(truck.id)}
         style={{
           width: "100%",

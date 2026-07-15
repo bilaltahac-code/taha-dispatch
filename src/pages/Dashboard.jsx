@@ -1,46 +1,80 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
+
 import Header from "../components/Header";
 import DayTabs from "../components/DayTabs";
 import Sidebar from "../components/Sidebar";
 import Truck from "../components/Truck";
+import CompletedOrders from "./CompletedOrders";
 
 import { readPdf } from "../utils/pdfReader";
 import { parseOrder } from "../utils/parser";
 import useDispatch from "../hooks/useDispatch";
 
+const createTodayKey = () => {
+  const date = new Date();
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
 export default function Dashboard() {
   const fileInputRef = useRef();
+
+  const [selectedDate, setSelectedDate] = useState(createTodayKey);
+  const [currentPage, setCurrentPage] = useState("dispatch");
 
   const {
     orders,
     setOrders,
     trucks,
+    completedOrders,
     addTruck,
     addRoute,
+    deleteRoute,
+    moveRoute,
     dropOrder,
     removeOrder,
-  } = useDispatch();
+    completeOrder,
+  } = useDispatch(selectedDate);
 
-  const handleFiles = async (e) => {
-    const files = Array.from(e.target.files);
-
+  const handleFiles = async (event) => {
+    const files = Array.from(event.target.files || []);
     const newOrders = [];
 
     for (const file of files) {
-      const text = await readPdf(file);
+      try {
+        const text = await readPdf(file);
+        const data = parseOrder(text);
 
-      const data = parseOrder(text);
-
-      newOrders.push({
-        id: crypto.randomUUID(),
-        orderNumber: data.orderNumber,
-        customer: data.customer,
-        pdf: URL.createObjectURL(file),
-      });
+        newOrders.push({
+          id: crypto.randomUUID(),
+          orderNumber: data.orderNumber,
+          customer: data.customer,
+          pdf: URL.createObjectURL(file),
+        });
+      } catch (error) {
+        console.error("Failed to read PDF:", error);
+      }
     }
 
-    setOrders((prev) => [...prev, ...newOrders]);
+    if (newOrders.length > 0) {
+      setOrders((prev) => [...prev, ...newOrders]);
+    }
+
+    event.target.value = "";
   };
+
+  if (currentPage === "completed") {
+    return (
+      <CompletedOrders
+        completedOrders={completedOrders}
+        onBack={() => setCurrentPage("dispatch")}
+      />
+    );
+  }
 
   return (
     <div
@@ -54,14 +88,17 @@ export default function Dashboard() {
     >
       <Header />
 
-      <DayTabs />
+      <DayTabs
+        selectedDate={selectedDate}
+        onSelectDate={setSelectedDate}
+      />
 
       <input
         ref={fileInputRef}
         type="file"
         hidden
         multiple
-        accept=".pdf"
+        accept=".pdf,application/pdf"
         onChange={handleFiles}
       />
 
@@ -69,11 +106,12 @@ export default function Dashboard() {
         style={{
           flex: 1,
           display: "flex",
+          minHeight: 0,
         }}
       >
         <Sidebar
           orders={orders}
-          onSelectFiles={() => fileInputRef.current.click()}
+          onSelectFiles={() => fileInputRef.current?.click()}
         />
 
         <div
@@ -83,17 +121,40 @@ export default function Dashboard() {
             overflow: "auto",
           }}
         >
+          <button
+            type="button"
+            onClick={() => setCurrentPage("completed")}
+            style={{
+              width: "100%",
+              padding: 13,
+              marginBottom: 20,
+              border: "none",
+              borderRadius: 10,
+              background: "#43a047",
+              color: "white",
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: 16,
+            }}
+          >
+            ✅ הזמנות שהושלמו ({completedOrders.length})
+          </button>
+
           {trucks.map((truck) => (
             <Truck
               key={truck.id}
               truck={truck}
               onAddRoute={addRoute}
+              onDeleteRoute={deleteRoute}
+              onMoveRoute={moveRoute}
               onDropOrder={dropOrder}
               onRemoveOrder={removeOrder}
+              onCompleteOrder={completeOrder}
             />
           ))}
 
           <button
+            type="button"
             onClick={addTruck}
             style={{
               width: "100%",
