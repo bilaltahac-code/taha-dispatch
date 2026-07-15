@@ -1,65 +1,115 @@
-import { useState } from "react";
+import { useRef } from "react";
+import Header from "../components/Header";
+import DayTabs from "../components/DayTabs";
+import Sidebar from "../components/Sidebar";
+import Truck from "../components/Truck";
+
+import { readPdf } from "../utils/pdfReader";
+import { parseOrder } from "../utils/parser";
+import useDispatch from "../hooks/useDispatch";
 
 export default function Dashboard() {
-  const [orders, setOrders] = useState([]);
+  const fileInputRef = useRef();
 
-  const addOrder = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const {
+    orders,
+    setOrders,
+    trucks,
+    addTruck,
+    addRoute,
+    dropOrder,
+    removeOrder,
+  } = useDispatch();
 
-    const order = {
-      id: Date.now(),
-      name: file.name,
-      file: URL.createObjectURL(file),
-      truck: "",
-    };
+  const handleFiles = async (e) => {
+    const files = Array.from(e.target.files);
 
-    setOrders([...orders, order]);
+    const newOrders = [];
+
+    for (const file of files) {
+      const text = await readPdf(file);
+
+      const data = parseOrder(text);
+
+      newOrders.push({
+        id: crypto.randomUUID(),
+        orderNumber: data.orderNumber,
+        customer: data.customer,
+        pdf: URL.createObjectURL(file),
+      });
+    }
+
+    setOrders((prev) => [...prev, ...newOrders]);
   };
 
   return (
-    <div className="app">
-      <h1>🚛 מערכת סידור משאיות</h1>
+    <div
+      style={{
+        direction: "rtl",
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        background: "#f4f6f8",
+      }}
+    >
+      <Header />
 
-      <label className="upload-btn">
-        ➕ הוסף הזמנה (PDF)
-        <input
-          type="file"
-          accept="application/pdf"
-          hidden
-          onChange={addOrder}
+      <DayTabs />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        hidden
+        multiple
+        accept=".pdf"
+        onChange={handleFiles}
+      />
+
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+        }}
+      >
+        <Sidebar
+          orders={orders}
+          onSelectFiles={() => fileInputRef.current.click()}
         />
-      </label>
 
-      <div className="orders">
-        {orders.map((order) => (
-          <div className="order-card" key={order.id}>
-            <h3>{order.name}</h3>
+        <div
+          style={{
+            flex: 1,
+            padding: 20,
+            overflow: "auto",
+          }}
+        >
+          {trucks.map((truck) => (
+            <Truck
+              key={truck.id}
+              truck={truck}
+              onAddRoute={addRoute}
+              onDropOrder={dropOrder}
+              onRemoveOrder={removeOrder}
+            />
+          ))}
 
-            <select
-              value={order.truck}
-              onChange={(e) => {
-                const newOrders = [...orders];
-                const index = newOrders.findIndex(
-                  (o) => o.id === order.id
-                );
-                newOrders[index].truck = e.target.value;
-                setOrders(newOrders);
-              }}
-            >
-              <option value="">בחר משאית</option>
-              <option>עז</option>
-              <option>זבידאת</option>
-            </select>
-
-            <br />
-            <br />
-
-            <a href={order.file} target="_blank">
-              📄 פתח הזמנה
-            </a>
-          </div>
-        ))}
+          <button
+            onClick={addTruck}
+            style={{
+              width: "100%",
+              padding: 18,
+              border: "2px dashed #1976d2",
+              borderRadius: 12,
+              background: "white",
+              color: "#1976d2",
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: 16,
+            }}
+          >
+            ➕ הוסף משאית נוספת
+          </button>
+        </div>
       </div>
     </div>
   );
