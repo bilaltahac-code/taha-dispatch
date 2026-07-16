@@ -24,6 +24,7 @@ const createDefaultTrucks = () => [
       {
         id: "az-route-1",
         name: "מסלול 1",
+        note: "",
         orders: [],
       },
     ],
@@ -35,6 +36,7 @@ const createDefaultTrucks = () => [
       {
         id: "zb-route-1",
         name: "מסלול 1",
+        note: "",
         orders: [],
       },
     ],
@@ -52,6 +54,7 @@ const normalizeTrucks = (trucks) => {
       Array.isArray(truck.routes) && truck.routes.length > 0
         ? truck.routes.map((route) => ({
             ...route,
+            note: route.note || "",
             orders: Array.isArray(route.orders)
               ? route.orders
               : [],
@@ -60,6 +63,7 @@ const normalizeTrucks = (trucks) => {
             {
               id: crypto.randomUUID(),
               name: "מסלול 1",
+              note: "",
               orders: [],
             },
           ],
@@ -290,6 +294,45 @@ export default function useDispatch(selectedDate) {
     });
   };
 
+  const renameTruck = (truckId, newName) => {
+    updateActiveTrucks((prev) =>
+      prev.map((truck) =>
+        sameId(truck.id, truckId)
+          ? {
+              ...truck,
+              name: newName,
+            }
+          : truck
+      )
+    );
+  };
+
+  const updateRouteNote = (
+    truckId,
+    routeId,
+    note
+  ) => {
+    updateActiveTrucks((prev) =>
+      prev.map((truck) => {
+        if (!sameId(truck.id, truckId)) {
+          return truck;
+        }
+
+        return {
+          ...truck,
+          routes: truck.routes.map((route) =>
+            sameId(route.id, routeId)
+              ? {
+                  ...route,
+                  note,
+                }
+              : route
+          ),
+        };
+      })
+    );
+  };
+
   const addTruck = () => {
     updateActiveTrucks((prev) => [
       ...prev,
@@ -300,6 +343,7 @@ export default function useDispatch(selectedDate) {
           {
             id: crypto.randomUUID(),
             name: "מסלול 1",
+            note: "",
             orders: [],
           },
         ],
@@ -729,6 +773,8 @@ export default function useDispatch(selectedDate) {
     restoreCompletedOrder,
     deleteOrder,
     updateOrder,
+    renameTruck,
+    updateRouteNote,
     addTruck,
     addRoute,
     deleteRoute,

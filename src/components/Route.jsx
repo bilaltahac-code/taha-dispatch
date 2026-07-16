@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import "./Route.css";
 
 export default function Route({
@@ -12,7 +14,16 @@ export default function Route({
   onDropOrder,
   onRemoveOrder,
   onToggleDispatched,
+  onUpdateRouteNote,
 }) {
+  const [routeNote, setRouteNote] = useState(
+    route.note || ""
+  );
+
+  useEffect(() => {
+    setRouteNote(route.note || "");
+  }, [route.note]);
+
   const handleDrop = (event) => {
     event.preventDefault();
 
@@ -45,6 +56,21 @@ export default function Route({
       "sourceRouteId",
       String(route.id)
     );
+  };
+
+  const saveRouteNote = () => {
+    if (typeof onUpdateRouteNote !== "function") {
+      return;
+    }
+
+    onUpdateRouteNote(route.id, routeNote.trim());
+  };
+
+  const handleNoteKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      event.currentTarget.blur();
+    }
   };
 
   return (
@@ -97,6 +123,29 @@ export default function Route({
           )}
         </div>
       </div>
+
+      <input
+        type="text"
+        value={routeNote}
+        onChange={(event) =>
+          setRouteNote(event.target.value)
+        }
+        onBlur={saveRouteNote}
+        onKeyDown={handleNoteKeyDown}
+        placeholder="📝 הערה למסלול..."
+        style={{
+          width: "100%",
+          marginBottom: 10,
+          padding: 10,
+          border: "1px solid #d5d9dd",
+          borderRadius: 8,
+          outline: "none",
+          boxSizing: "border-box",
+          fontFamily: "inherit",
+          fontSize: 14,
+          background: "white",
+        }}
+      />
 
       <div
         onDragOver={(event) => {

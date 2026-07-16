@@ -1,15 +1,137 @@
-.header {
-  height: 70px;
-  background: #1976d2;
+.app-header {
+  direction: rtl;
+  min-height: 82px;
+  padding: 10px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-shrink: 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #073b8f 0%,
+      #0756c9 55%,
+      #063d95 100%
+    );
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+
+  box-shadow:
+    0 8px 24px rgba(1, 40, 103, 0.22);
+
   color: white;
+}
+
+.app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+
+.app-header__logo-wrapper {
+  width: 210px;
+  height: 58px;
+  padding: 5px 12px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+  overflow: hidden;
+  flex-shrink: 0;
+
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.97);
+
+  box-shadow:
+    0 5px 15px rgba(0, 0, 0, 0.16);
 }
 
-.header h1 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: bold;
+.app-header__logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.app-header__divider {
+  width: 1px;
+  height: 44px;
+  flex-shrink: 0;
+
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.app-header__titles {
+  min-width: 0;
+}
+
+.app-header__title {
+  font-size: 23px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: white;
+  white-space: nowrap;
+}
+
+.app-header__subtitle {
+  margin-top: 5px;
+
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.app-header__status {
+  padding: 9px 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 100px;
+
+  background: rgba(255, 255, 255, 0.12);
+
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.app-header__status-dot {
+  width: 9px;
+  height: 9px;
+  display: block;
+  flex-shrink: 0;
+
+  border-radius: 50%;
+  background: #32d583;
+
+  box-shadow:
+    0 0 0 4px rgba(50, 213, 131, 0.16);
+}
+
+@media (max-width: 850px) {
+  .app-header {
+    padding-inline: 16px;
+  }
+
+  .app-header__logo-wrapper {
+    width: 165px;
+  }
+
+  .app-header__title {
+    font-size: 19px;
+  }
+
+  .app-header__status {
+    display: none;
+  }
 }

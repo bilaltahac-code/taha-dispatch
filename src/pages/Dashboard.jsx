@@ -37,6 +37,8 @@ export default function Dashboard() {
     restoreCompletedOrder,
     deleteOrder,
     updateOrder,
+    renameTruck,
+    updateRouteNote,
     addTruck,
     addRoute,
     deleteRoute,
@@ -242,6 +244,8 @@ export default function Dashboard() {
               onDropOrder={dropOrder}
               onRemoveOrder={removeOrder}
               onToggleDispatched={toggleOrderDispatched}
+              onRenameTruck={renameTruck}
+              onUpdateRouteNote={updateRouteNote}
             />
           ))}
 
