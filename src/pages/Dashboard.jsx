@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Header from "../components/Header";
 import DayTabs from "../components/DayTabs";
@@ -21,6 +21,20 @@ const createTodayKey = () => {
   return `${year}-${month}-${day}`;
 };
 
+const createSafePdfName = (fileName, orderNumber) => {
+  const cleanOrderNumber = String(orderNumber || "order")
+    .replace(/[\\/:*?"<>|]/g, "-")
+    .trim();
+
+  const cleanOriginalName = String(fileName || "order.pdf")
+    .replace(/[\\/:*?"<>|]/g, "-")
+    .trim();
+
+  const timestamp = Date.now();
+
+  return `${cleanOrderNumber}-${timestamp}-${cleanOriginalName}`;
+};
+
 export default function Dashboard() {
   const fileInputRef = useRef();
 
@@ -40,16 +54,65 @@ export default function Dashboard() {
     renameTruck,
     updateRouteNote,
     addTruck,
+    deleteTruck,
     addRoute,
     deleteRoute,
     moveRoute,
     dropOrder,
     removeOrder,
     toggleOrderDispatched,
-    finishDay,
   } = useDispatch(selectedDate);
 
   const currentPendingOrder = pendingOrders[0] || null;
+
+  useEffect(() => {
+    let midnightTimeout;
+
+    const moveToToday = () => {
+      setSelectedDate(createTodayKey());
+    };
+
+    const scheduleNextMidnight = () => {
+      const now = new Date();
+
+      const nextMidnight = new Date(now);
+      nextMidnight.setDate(nextMidnight.getDate() + 1);
+      nextMidnight.setHours(0, 0, 1, 0);
+
+      const delay = nextMidnight.getTime() - now.getTime();
+
+      midnightTimeout = window.setTimeout(() => {
+        moveToToday();
+        scheduleNextMidnight();
+      }, delay);
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        moveToToday();
+      }
+    };
+
+    scheduleNextMidnight();
+
+    window.addEventListener("focus", moveToToday);
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    return () => {
+      window.clearTimeout(midnightTimeout);
+
+      window.removeEventListener("focus", moveToToday);
+
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+    };
+  }, []);
 
   const handleFiles = async (event) => {
     const files = Array.from(event.target.files || []);
@@ -57,19 +120,44 @@ export default function Dashboard() {
 
     for (const file of files) {
       try {
+        if (!window.electronAPI?.savePdf) {
+          throw new Error("Electron API is not available");
+        }
+
         const text = await readPdf(file);
         const data = parseOrder(text);
+
+        const fileBuffer = await file.arrayBuffer();
+
+        const savedFileName = createSafePdfName(
+          file.name,
+          data.orderNumber
+        );
+
+        const saveResult = await window.electronAPI.savePdf(
+          fileBuffer,
+          savedFileName
+        );
+
+        if (!saveResult?.success || !saveResult.filePath) {
+          throw new Error(
+            saveResult?.error || "Failed to save PDF"
+          );
+        }
 
         parsedOrders.push({
           id: crypto.randomUUID(),
           orderNumber: data.orderNumber,
           customer: data.customer,
           destination: "",
-          pdf: URL.createObjectURL(file),
+          pdf: saveResult.filePath,
         });
       } catch (error) {
-        console.error("Failed to read PDF:", error);
-        window.alert(`לא ניתן לקרוא את הקובץ: ${file.name}`);
+        console.error("Failed to read or save PDF:", error);
+
+        window.alert(
+          `לא ניתן לקרוא או לשמור את הקובץ: ${file.name}`
+        );
       }
     }
 
@@ -98,37 +186,6 @@ export default function Dashboard() {
     setDestinationInput("");
   };
 
-  const handleFinishDay = () => {
-    const dispatchedCount = trucks.reduce(
-      (total, truck) =>
-        total +
-        truck.routes.reduce(
-          (routeTotal, route) =>
-            routeTotal +
-            route.orders.filter(
-              (order) => Boolean(order.dispatched)
-            ).length,
-          0
-        ),
-      0
-    );
-
-    if (dispatchedCount === 0) {
-      window.alert("אין הזמנות שסומנו כיצאו");
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `לסיים את היום ולהעביר ${dispatchedCount} הזמנות להיסטוריה?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    finishDay();
-  };
-
   const handleRestoreOrder = (orderId) => {
     restoreCompletedOrder(orderId);
     setCurrentPage("dispatch");
@@ -151,15 +208,26 @@ export default function Dashboard() {
         height: "100vh",
         display: "flex",
         flexDirection: "column",
-        background: "#f4f6f8",
+        overflow: "hidden",
+        background: "var(--background)",
       }}
     >
       <Header />
 
-      <DayTabs
-        selectedDate={selectedDate}
-        onSelectDate={setSelectedDate}
-      />
+      <div
+        style={{
+          padding: "10px 18px 0",
+          background: "var(--surface)",
+          borderBottom: "1px solid var(--border)",
+          boxShadow: "var(--shadow-small)",
+          zIndex: 5,
+        }}
+      >
+        <DayTabs
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
+      </div>
 
       <input
         ref={fileInputRef}
@@ -175,6 +243,7 @@ export default function Dashboard() {
           flex: 1,
           display: "flex",
           minHeight: 0,
+          overflow: "hidden",
         }}
       >
         <Sidebar
@@ -184,89 +253,115 @@ export default function Dashboard() {
           onUpdateOrder={updateOrder}
         />
 
-        <div
+        <main
           style={{
             flex: 1,
-            padding: 20,
-            overflow: "auto",
+            minWidth: 0,
+            padding: 16,
+            overflowY: "auto",
+            overflowX: "hidden",
           }}
         >
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 12,
-              marginBottom: 20,
+              width: "100%",
+              maxWidth: 1500,
+              margin: "0 auto",
             }}
           >
-            <button
-              type="button"
-              onClick={() => setCurrentPage("completed")}
+            <div
               style={{
-                padding: 13,
-                border: "none",
-                borderRadius: 10,
-                background: "#43a047",
-                color: "white",
-                cursor: "pointer",
-                fontWeight: "bold",
-                fontSize: 16,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 10,
+                marginBottom: 14,
+                padding: "10px 12px",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-medium)",
+                boxShadow: "var(--shadow-small)",
               }}
             >
-              ✅ הזמנות שהושלמו ({completedOrders.length})
-            </button>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage("completed")}
+                  style={{
+                    minHeight: 40,
+                    padding: "8px 18px",
+                    borderRadius: "var(--radius-small)",
+                    background: "var(--success)",
+                    color: "#ffffff",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    boxShadow:
+                      "0 4px 10px rgba(24, 134, 75, 0.18)",
+                  }}
+                >
+                  ✅ הזמנות שהושלמו ({completedOrders.length})
+                </button>
+              </div>
+            </div>
+
+            <section
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(420px, 1fr))",
+                alignItems: "start",
+                gap: 16,
+                marginBottom: 16,
+              }}
+            >
+              {trucks.map((truck) => (
+                <Truck
+                  key={truck.id}
+                  truck={truck}
+                  canDelete={
+                    truck.id !== "az" &&
+                    truck.id !== "zbidat"
+                  }
+                  onDeleteTruck={deleteTruck}
+                  onAddRoute={addRoute}
+                  onDeleteRoute={deleteRoute}
+                  onMoveRoute={moveRoute}
+                  onDropOrder={dropOrder}
+                  onRemoveOrder={removeOrder}
+                  onToggleDispatched={toggleOrderDispatched}
+                  onRenameTruck={renameTruck}
+                  onUpdateRouteNote={updateRouteNote}
+                />
+              ))}
+            </section>
 
             <button
               type="button"
-              onClick={handleFinishDay}
+              onClick={addTruck}
               style={{
-                padding: 13,
-                border: "none",
-                borderRadius: 10,
-                background: "#263238",
-                color: "white",
-                cursor: "pointer",
-                fontWeight: "bold",
-                fontSize: 16,
+                width: "100%",
+                minHeight: 52,
+                padding: "12px 18px",
+                border: "2px dashed var(--primary)",
+                borderRadius: "var(--radius-medium)",
+                background: "rgba(255, 255, 255, 0.72)",
+                color: "var(--primary)",
+                fontWeight: 700,
+                fontSize: 15,
               }}
             >
-              🌙 סיים יום עבודה
+              ＋ הוסף משאית נוספת
             </button>
           </div>
-
-          {trucks.map((truck) => (
-            <Truck
-              key={truck.id}
-              truck={truck}
-              onAddRoute={addRoute}
-              onDeleteRoute={deleteRoute}
-              onMoveRoute={moveRoute}
-              onDropOrder={dropOrder}
-              onRemoveOrder={removeOrder}
-              onToggleDispatched={toggleOrderDispatched}
-              onRenameTruck={renameTruck}
-              onUpdateRouteNote={updateRouteNote}
-            />
-          ))}
-
-          <button
-            type="button"
-            onClick={addTruck}
-            style={{
-              width: "100%",
-              padding: 18,
-              border: "2px dashed #1976d2",
-              borderRadius: 12,
-              background: "white",
-              color: "#1976d2",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: 16,
-            }}
-          >
-            ➕ הוסף משאית נוספת
-          </button>
-        </div>
+        </main>
       </div>
 
       <DestinationModal

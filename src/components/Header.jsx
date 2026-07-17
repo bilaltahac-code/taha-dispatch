@@ -25,9 +25,43 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="app-header__status">
-        <span className="app-header__status-dot" />
-        <span>המערכת פעילה</span>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 18,
+        }}
+      >
+        <div className="app-header__status">
+          <span className="app-header__status-dot" />
+          <span>המערכת פעילה</span>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "8px 14px",
+            background: "rgba(25,118,210,0.08)",
+            border: "1px solid rgba(25,118,210,0.15)",
+            borderRadius: 12,
+            fontSize: 13,
+            fontWeight: 700,
+            color: "#1976d2",
+          }}
+        >
+          <span>📅</span>
+
+          <span>
+            {new Date().toLocaleDateString("he-IL", {
+              weekday: "long",
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })}
+          </span>
+        </div>
       </div>
     </header>
   );

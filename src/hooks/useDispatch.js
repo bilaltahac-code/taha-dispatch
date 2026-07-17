@@ -8,6 +8,8 @@ import {
 
 const STORAGE_KEY = "taha-dispatch-data-v1";
 
+const PERMANENT_TRUCK_IDS = new Set(["az", "zbidat"]);
+
 const createDateKey = (date = new Date()) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -68,6 +70,147 @@ const normalizeTrucks = (trucks) => {
             },
           ],
   }));
+};
+
+const removeDispatchDetails = (order) => {
+  const restoredOrder = {
+    ...order,
+    dispatched: false,
+    dispatchedAt: null,
+  };
+
+  delete restoredOrder.truckId;
+  delete restoredOrder.truckName;
+  delete restoredOrder.routeId;
+  delete restoredOrder.routeName;
+  delete restoredOrder.plannedDate;
+  delete restoredOrder.completedAt;
+
+  return restoredOrder;
+};
+
+const closePreviousDaysAutomatically = (
+  dispatchData,
+  todayKey
+) => {
+  const currentOrders = Array.isArray(dispatchData.orders)
+    ? [...dispatchData.orders]
+    : [];
+
+  const currentCompletedOrders = Array.isArray(
+    dispatchData.completedOrders
+  )
+    ? [...dispatchData.completedOrders]
+    : [];
+
+  const orderIds = new Set(
+    currentOrders.map((order) => String(order.id))
+  );
+
+  const completedOrderIds = new Set(
+    currentCompletedOrders.map((order) =>
+      String(order.id)
+    )
+  );
+
+  const automaticallyCompletedOrders = [];
+  const returnedOrders = [];
+  const updatedPlans = {};
+
+  const automaticCompletedAt = new Date().toISOString();
+
+  Object.entries(dispatchData.plans || {}).forEach(
+    ([dateKey, plan]) => {
+      const normalizedTrucks = normalizeTrucks(
+        plan?.trucks
+      );
+
+      if (dateKey >= todayKey) {
+        updatedPlans[dateKey] = {
+          ...plan,
+          trucks: normalizedTrucks,
+        };
+
+        return;
+      }
+
+      const clearedTrucks = normalizedTrucks.map(
+        (truck) => ({
+          ...truck,
+          routes: truck.routes.map((route) => {
+            route.orders.forEach((order) => {
+              const orderId = String(order.id);
+
+              if (Boolean(order.dispatched)) {
+                if (completedOrderIds.has(orderId)) {
+                  return;
+                }
+
+                completedOrderIds.add(orderId);
+
+                automaticallyCompletedOrders.push({
+                  ...order,
+                  truckId: truck.id,
+                  truckName: truck.name,
+                  routeId: route.id,
+                  routeName: route.name,
+                  plannedDate: dateKey,
+                  completedAt:
+                    order.dispatchedAt ||
+                    automaticCompletedAt,
+                });
+
+                return;
+              }
+
+              if (
+                orderIds.has(orderId) ||
+                completedOrderIds.has(orderId)
+              ) {
+                return;
+              }
+
+              orderIds.add(orderId);
+
+              returnedOrders.push(
+                removeDispatchDetails(order)
+              );
+            });
+
+            return {
+              ...route,
+              orders: [],
+            };
+          }),
+        })
+      );
+
+      updatedPlans[dateKey] = {
+        ...plan,
+        trucks: clearedTrucks,
+      };
+    }
+  );
+
+  const allCompletedOrderIds = new Set([
+    ...completedOrderIds,
+  ]);
+
+  return {
+    ...dispatchData,
+    orders: [
+      ...currentOrders.filter(
+        (order) =>
+          !allCompletedOrderIds.has(String(order.id))
+      ),
+      ...returnedOrders,
+    ],
+    completedOrders: [
+      ...automaticallyCompletedOrders,
+      ...currentCompletedOrders,
+    ],
+    plans: updatedPlans,
+  };
 };
 
 const loadSavedData = (initialDate) => {
@@ -172,9 +315,14 @@ const updateOrderInTrucks = (
 export default function useDispatch(selectedDate) {
   const activeDate = selectedDate || createDateKey();
 
-  const [dispatchData, setDispatchData] = useState(() =>
-    loadSavedData(activeDate)
-  );
+  const [dispatchData, setDispatchData] = useState(() => {
+    const savedData = loadSavedData(activeDate);
+
+    return closePreviousDaysAutomatically(
+      savedData,
+      createDateKey()
+    );
+  });
 
   const orders = dispatchData.orders;
 
@@ -198,6 +346,70 @@ export default function useDispatch(selectedDate) {
       console.error("Failed to save dispatch data:", error);
     }
   }, [dispatchData]);
+
+  useEffect(() => {
+    let midnightTimeout;
+    let safetyInterval;
+
+    const updateToCurrentDay = () => {
+      setDispatchData((previousData) =>
+        closePreviousDaysAutomatically(
+          previousData,
+          createDateKey()
+        )
+      );
+    };
+
+    const scheduleMidnightUpdate = () => {
+      const now = new Date();
+
+      const nextMidnight = new Date(now);
+      nextMidnight.setDate(nextMidnight.getDate() + 1);
+      nextMidnight.setHours(0, 0, 1, 0);
+
+      const millisecondsUntilMidnight =
+        nextMidnight.getTime() - now.getTime();
+
+      midnightTimeout = window.setTimeout(() => {
+        updateToCurrentDay();
+
+        safetyInterval = window.setInterval(
+          updateToCurrentDay,
+          60 * 60 * 1000
+        );
+      }, millisecondsUntilMidnight);
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        updateToCurrentDay();
+      }
+    };
+
+    scheduleMidnightUpdate();
+
+    window.addEventListener("focus", updateToCurrentDay);
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    return () => {
+      window.clearTimeout(midnightTimeout);
+      window.clearInterval(safetyInterval);
+
+      window.removeEventListener(
+        "focus",
+        updateToCurrentDay
+      );
+
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+    };
+  }, []);
 
   const setOrders = (value) => {
     setDispatchData((prev) => {
@@ -349,6 +561,63 @@ export default function useDispatch(selectedDate) {
         ],
       },
     ]);
+  };
+
+  const deleteTruck = (truckId) => {
+    if (PERMANENT_TRUCK_IDS.has(String(truckId))) {
+      return;
+    }
+
+    setDispatchData((prev) => {
+      const currentTrucks =
+        prev.plans[activeDate]?.trucks ||
+        createDefaultTrucks();
+
+      const truckToDelete = currentTrucks.find((truck) =>
+        sameId(truck.id, truckId)
+      );
+
+      if (!truckToDelete) {
+        return prev;
+      }
+
+      const existingOrderIds = new Set(
+        prev.orders.map((order) => String(order.id))
+      );
+
+      const returnedOrders = truckToDelete.routes.flatMap(
+        (route) =>
+          route.orders
+            .filter(
+              (order) =>
+                !existingOrderIds.has(String(order.id))
+            )
+            .map((order) => {
+              existingOrderIds.add(String(order.id));
+
+              return {
+                ...order,
+                dispatched: false,
+                dispatchedAt: null,
+              };
+            })
+      );
+
+      const updatedTrucks = currentTrucks.filter(
+        (truck) => !sameId(truck.id, truckId)
+      );
+
+      return {
+        ...prev,
+        orders: [...prev.orders, ...returnedOrders],
+        plans: {
+          ...prev.plans,
+          [activeDate]: {
+            trucks: updatedTrucks,
+          },
+        },
+      };
+    });
   };
 
   const addRoute = (truckId) => {
@@ -621,22 +890,24 @@ export default function useDispatch(selectedDate) {
 
                 return {
                   ...currentRoute,
-                  orders: currentRoute.orders.map((order) => {
-                    if (!sameId(order.id, orderId)) {
-                      return order;
+                  orders: currentRoute.orders.map(
+                    (order) => {
+                      if (!sameId(order.id, orderId)) {
+                        return order;
+                      }
+
+                      const nextDispatched =
+                        !Boolean(order.dispatched);
+
+                      return {
+                        ...order,
+                        dispatched: nextDispatched,
+                        dispatchedAt: nextDispatched
+                          ? new Date().toISOString()
+                          : null,
+                      };
                     }
-
-                    const nextDispatched =
-                      !Boolean(order.dispatched);
-
-                    return {
-                      ...order,
-                      dispatched: nextDispatched,
-                      dispatchedAt: nextDispatched
-                        ? new Date().toISOString()
-                        : null,
-                    };
-                  }),
+                  ),
                 };
               }
             ),
@@ -680,7 +951,9 @@ export default function useDispatch(selectedDate) {
           );
 
           ordersToComplete.forEach((order) => {
-            if (existingCompletedIds.has(String(order.id))) {
+            if (
+              existingCompletedIds.has(String(order.id))
+            ) {
               return;
             }
 
@@ -740,18 +1013,8 @@ export default function useDispatch(selectedDate) {
         sameId(order.id, orderId)
       );
 
-      const restoredOrder = {
-        ...completedOrder,
-        dispatched: false,
-        dispatchedAt: null,
-      };
-
-      delete restoredOrder.truckId;
-      delete restoredOrder.truckName;
-      delete restoredOrder.routeId;
-      delete restoredOrder.routeName;
-      delete restoredOrder.plannedDate;
-      delete restoredOrder.completedAt;
+      const restoredOrder =
+        removeDispatchDetails(completedOrder);
 
       return {
         ...prev,
@@ -760,7 +1023,9 @@ export default function useDispatch(selectedDate) {
           : [...prev.orders, restoredOrder],
         completedOrders: (
           prev.completedOrders || []
-        ).filter((order) => !sameId(order.id, orderId)),
+        ).filter(
+          (order) => !sameId(order.id, orderId)
+        ),
       };
     });
   };
@@ -776,6 +1041,7 @@ export default function useDispatch(selectedDate) {
     renameTruck,
     updateRouteNote,
     addTruck,
+    deleteTruck,
     addRoute,
     deleteRoute,
     moveRoute,

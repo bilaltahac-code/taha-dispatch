@@ -121,44 +121,86 @@ export default function CompletedOrders({
     <div
       style={{
         direction: "rtl",
-        minHeight: "100vh",
-        background: "#f4f6f8",
-        padding: 24,
+        height: "100vh",
+        overflowY: "auto",
+        overflowX: "hidden",
+        background: "var(--background)",
+        color: "var(--text-main)",
       }}
     >
-      <div
+      <header
         style={{
-          maxWidth: 1200,
-          margin: "0 auto",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          background: "var(--surface)",
+          borderBottom: "1px solid var(--border)",
+          boxShadow: "var(--shadow-small)",
         }}
       >
         <div
           style={{
+            width: "100%",
+            maxWidth: 1500,
+            minHeight: 74,
+            margin: "0 auto",
+            padding: "12px 20px",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: 20,
-            marginBottom: 24,
+            flexWrap: "wrap",
+            gap: 14,
+            boxSizing: "border-box",
           }}
         >
-          <div>
-            <h1
-              style={{
-                margin: 0,
-                color: "#1f2937",
-              }}
-            >
-              ✅ הזמנות שהושלמו
-            </h1>
-
+          <div
+            style={{
+              minWidth: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
             <div
               style={{
-                marginTop: 6,
-                color: "#6b7280",
+                width: 44,
+                height: 44,
+                minWidth: 44,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 12,
+                background: "var(--primary-light)",
+                color: "var(--primary)",
+                fontSize: 22,
               }}
             >
-              מוצגות {filteredOrders.length} מתוך{" "}
-              {completedOrders.length} הזמנות
+              ✓
+            </div>
+
+            <div style={{ minWidth: 0 }}>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: 22,
+                  lineHeight: 1.2,
+                  fontWeight: 900,
+                }}
+              >
+                הזמנות שהושלמו
+              </h1>
+
+              <div
+                style={{
+                  marginTop: 4,
+                  color: "var(--text-muted)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                מוצגות {filteredOrders.length} מתוך{" "}
+                {completedOrders.length} הזמנות
+              </div>
             </div>
           </div>
 
@@ -166,46 +208,58 @@ export default function CompletedOrders({
             type="button"
             onClick={onBack}
             style={{
-              padding: "10px 18px",
-              border: "none",
-              borderRadius: 8,
-              background: "#1976d2",
-              color: "white",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: 15,
-              whiteSpace: "nowrap",
+              minHeight: 40,
+              padding: "8px 18px",
+              borderRadius: "var(--radius-small)",
+              background: "var(--primary)",
+              color: "#ffffff",
+              fontSize: 14,
+              fontWeight: 800,
+              boxShadow:
+                "0 4px 10px rgba(25, 118, 210, 0.18)",
             }}
           >
             חזרה לסידור
           </button>
         </div>
+      </header>
 
-        <div
+      <main
+        style={{
+          width: "100%",
+          maxWidth: 1500,
+          margin: "0 auto",
+          padding: 18,
+          paddingBottom: 40,
+          boxSizing: "border-box",
+        }}
+      >
+        <section
           style={{
             display: "grid",
             gridTemplateColumns:
-              "minmax(240px, 2fr) minmax(180px, 1fr) minmax(180px, 1fr) auto",
+              "minmax(240px, 2fr) minmax(170px, 1fr) minmax(170px, 1fr) auto",
             gap: 12,
             alignItems: "end",
-            background: "white",
-            borderRadius: 14,
-            padding: 18,
-            marginBottom: 20,
-            boxShadow: "0 2px 8px rgba(0,0,0,.08)",
+            padding: 14,
+            marginBottom: 16,
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-medium)",
+            boxShadow: "var(--shadow-small)",
           }}
         >
           <div>
             <label
               style={{
                 display: "block",
-                marginBottom: 7,
-                color: "#444",
-                fontWeight: "bold",
-                fontSize: 14,
+                marginBottom: 6,
+                color: "var(--text-muted)",
+                fontSize: 12,
+                fontWeight: 800,
               }}
             >
-              חיפוש
+              חיפוש הזמנה
             </label>
 
             <input
@@ -214,16 +268,19 @@ export default function CompletedOrders({
               onChange={(event) =>
                 setSearchTerm(event.target.value)
               }
-              placeholder="מספר, לקוח או יעד..."
+              placeholder="מספר הזמנה, לקוח או יעד..."
               style={{
                 width: "100%",
-                padding: 11,
-                border: "1px solid #d5d9dd",
-                borderRadius: 8,
-                outline: "none",
+                minHeight: 42,
+                padding: "9px 12px",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-small)",
+                background: "var(--surface-soft)",
+                color: "var(--text-main)",
                 fontFamily: "inherit",
                 fontSize: 14,
                 boxSizing: "border-box",
+                outline: "none",
               }}
             />
           </div>
@@ -232,10 +289,10 @@ export default function CompletedOrders({
             <label
               style={{
                 display: "block",
-                marginBottom: 7,
-                color: "#444",
-                fontWeight: "bold",
-                fontSize: 14,
+                marginBottom: 6,
+                color: "var(--text-muted)",
+                fontSize: 12,
+                fontWeight: 800,
               }}
             >
               משאית
@@ -248,23 +305,22 @@ export default function CompletedOrders({
               }
               style={{
                 width: "100%",
-                padding: 11,
-                border: "1px solid #d5d9dd",
-                borderRadius: 8,
-                outline: "none",
+                minHeight: 42,
+                padding: "9px 12px",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-small)",
+                background: "var(--surface-soft)",
+                color: "var(--text-main)",
                 fontFamily: "inherit",
                 fontSize: 14,
-                background: "white",
                 boxSizing: "border-box",
+                outline: "none",
               }}
             >
               <option value="all">כל המשאיות</option>
 
               {truckNames.map((truckName) => (
-                <option
-                  key={truckName}
-                  value={truckName}
-                >
+                <option key={truckName} value={truckName}>
                   {truckName}
                 </option>
               ))}
@@ -275,10 +331,10 @@ export default function CompletedOrders({
             <label
               style={{
                 display: "block",
-                marginBottom: 7,
-                color: "#444",
-                fontWeight: "bold",
-                fontSize: 14,
+                marginBottom: 6,
+                color: "var(--text-muted)",
+                fontSize: 12,
+                fontWeight: 800,
               }}
             >
               תאריך סידור
@@ -292,13 +348,16 @@ export default function CompletedOrders({
               }
               style={{
                 width: "100%",
-                padding: 10,
-                border: "1px solid #d5d9dd",
-                borderRadius: 8,
-                outline: "none",
+                minHeight: 42,
+                padding: "8px 12px",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-small)",
+                background: "var(--surface-soft)",
+                color: "var(--text-main)",
                 fontFamily: "inherit",
                 fontSize: 14,
                 boxSizing: "border-box",
+                outline: "none",
               }}
             />
           </div>
@@ -308,174 +367,342 @@ export default function CompletedOrders({
             onClick={clearFilters}
             disabled={!hasActiveFilters}
             style={{
-              padding: "11px 18px",
-              border: "none",
-              borderRadius: 8,
+              minHeight: 42,
+              padding: "9px 16px",
+              borderRadius: "var(--radius-small)",
               background: hasActiveFilters
-                ? "#e53935"
-                : "#d6d6d6",
-              color: "white",
+                ? "var(--danger)"
+                : "var(--border)",
+              color: hasActiveFilters
+                ? "#ffffff"
+                : "var(--text-muted)",
               cursor: hasActiveFilters
                 ? "pointer"
                 : "not-allowed",
-              fontWeight: "bold",
+              fontSize: 13,
+              fontWeight: 800,
               whiteSpace: "nowrap",
+              opacity: hasActiveFilters ? 1 : 0.75,
             }}
           >
             נקה סינון
           </button>
-        </div>
+        </section>
 
         {completedOrders.length === 0 ? (
           <div
             style={{
-              background: "white",
-              borderRadius: 14,
-              padding: 50,
+              minHeight: 260,
+              padding: 40,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
               textAlign: "center",
-              color: "#777",
-              boxShadow: "0 2px 8px rgba(0,0,0,.08)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-large)",
+              boxShadow: "var(--shadow-small)",
             }}
           >
-            עדיין אין הזמנות שהושלמו
+            <div
+              style={{
+                width: 58,
+                height: 58,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 16,
+                background: "var(--surface-soft)",
+                fontSize: 28,
+              }}
+            >
+              📦
+            </div>
+
+            <div
+              style={{
+                marginTop: 14,
+                fontSize: 18,
+                fontWeight: 900,
+              }}
+            >
+              עדיין אין הזמנות שהושלמו
+            </div>
           </div>
         ) : filteredOrders.length === 0 ? (
           <div
             style={{
-              background: "white",
-              borderRadius: 14,
-              padding: 50,
+              minHeight: 230,
+              padding: 40,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
               textAlign: "center",
-              color: "#777",
-              boxShadow: "0 2px 8px rgba(0,0,0,.08)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-large)",
+              boxShadow: "var(--shadow-small)",
             }}
           >
-            לא נמצאו הזמנות לפי הסינון
+            <div style={{ fontSize: 30 }}>🔍</div>
+
+            <div
+              style={{
+                marginTop: 12,
+                fontSize: 17,
+                fontWeight: 900,
+              }}
+            >
+              לא נמצאו הזמנות
+            </div>
           </div>
         ) : (
-          <div
+          <section
             style={{
               display: "grid",
               gridTemplateColumns:
-                "repeat(auto-fill, minmax(300px, 1fr))",
-              gap: 16,
+                "repeat(auto-fill, minmax(310px, 1fr))",
+              gap: 14,
             }}
           >
             {filteredOrders.map((order) => (
-              <div
+              <article
                 key={`${order.id}-${order.completedAt}`}
                 style={{
-                  background: "white",
-                  borderRadius: 14,
-                  padding: 18,
-                  boxShadow: "0 2px 8px rgba(0,0,0,.08)",
-                  borderTop: "4px solid #43a047",
+                  minWidth: 0,
+                  overflow: "hidden",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-medium)",
+                  boxShadow: "var(--shadow-small)",
                 }}
               >
                 <div
                   style={{
-                    fontSize: 20,
-                    fontWeight: "bold",
-                    color: "#1976d2",
+                    height: 5,
+                    background: "var(--success)",
                   }}
-                >
-                  הזמנה {order.orderNumber}
-                </div>
+                />
 
-                <div
-                  style={{
-                    marginTop: 8,
-                    fontSize: 17,
-                    fontWeight: "bold",
-                    color: "#333",
-                  }}
-                >
-                  {order.customer}
-                </div>
-
-                <div
-                  style={{
-                    marginTop: 9,
-                    color: order.destination
-                      ? "#1f2937"
-                      : "#999",
-                    fontWeight: order.destination
-                      ? "bold"
-                      : "normal",
-                  }}
-                >
-                  📍 יעד:{" "}
-                  {order.destination || "לא הוגדר יעד"}
-                </div>
-
-                <div
-                  style={{
-                    marginTop: 16,
-                    color: "#555",
-                    lineHeight: 1.9,
-                  }}
-                >
-                  <div>
-                    🚚 משאית: {order.truckName || "-"}
-                  </div>
-
-                  <div>
-                    📍 מסלול: {order.routeName || "-"}
-                  </div>
-
-                  <div>
-                    📅 תאריך סידור:{" "}
-                    {formatPlannedDate(order.plannedDate)}
-                  </div>
-
-                  <div>
-                    ✅ הושלם:{" "}
-                    {formatDate(order.completedAt)}
-                  </div>
-                </div>
-
-                {order.pdf && (
-                  <button
-                    type="button"
-                    onClick={() => window.open(order.pdf)}
+                <div style={{ padding: 15 }}>
+                  <div
                     style={{
-                      marginTop: 16,
-                      width: "100%",
-                      padding: 10,
-                      border: "none",
-                      borderRadius: 8,
-                      background: "#43a047",
-                      color: "white",
-                      cursor: "pointer",
-                      fontWeight: "bold",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: 10,
                     }}
                   >
-                    📄 פתח הזמנה
-                  </button>
-                )}
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          color: "var(--primary)",
+                          fontSize: 12,
+                          fontWeight: 800,
+                        }}
+                      >
+                        הזמנה
+                      </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleRestoreOrder(order)}
-                  style={{
-                    marginTop: 10,
-                    width: "100%",
-                    padding: 10,
-                    border: "none",
-                    borderRadius: 8,
-                    background: "#1976d2",
-                    color: "white",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                  }}
-                >
-                  ↩️ החזר לסידור
-                </button>
-              </div>
+                      <div
+                        style={{
+                          marginTop: 2,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontSize: 19,
+                          fontWeight: 900,
+                        }}
+                      >
+                        {order.orderNumber || "-"}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        flexShrink: 0,
+                        padding: "5px 9px",
+                        borderRadius: 999,
+                        background: "rgba(24, 134, 75, 0.1)",
+                        color: "var(--success)",
+                        fontSize: 11,
+                        fontWeight: 900,
+                      }}
+                    >
+                      הושלם
+                    </div>
+                  </div>
+
+                  <div
+                    title={order.customer}
+                    style={{
+                      marginTop: 12,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      fontSize: 16,
+                      fontWeight: 800,
+                    }}
+                  >
+                    {order.customer || "לקוח ללא שם"}
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 8,
+                      minHeight: 38,
+                      padding: "8px 10px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 7,
+                      borderRadius: "var(--radius-small)",
+                      background: "var(--surface-soft)",
+                      color: order.destination
+                        ? "var(--text-main)"
+                        : "var(--text-muted)",
+                      fontSize: 13,
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span>📍</span>
+
+                    <span
+                      title={order.destination}
+                      style={{
+                        minWidth: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {order.destination || "לא הוגדר יעד"}
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 12,
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: "8px 9px",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-small)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "var(--text-muted)",
+                          fontSize: 10,
+                          fontWeight: 800,
+                        }}
+                      >
+                        משאית
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: 3,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontSize: 13,
+                          fontWeight: 800,
+                        }}
+                      >
+                        {order.truckName || "-"}
+                      </div>
+                    </div>
+
+                   
+
+                    <div
+                      style={{
+                        padding: "8px 9px",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-small)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "var(--text-muted)",
+                          fontSize: 10,
+                          fontWeight: 800,
+                        }}
+                      >
+                        תאריך סידור
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: 3,
+                          fontSize: 13,
+                          fontWeight: 800,
+                        }}
+                      >
+                        {formatPlannedDate(order.plannedDate)}
+                      </div>
+                    </div>
+
+                   
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 13,
+                      display: "grid",
+                      gridTemplateColumns: order.pdf
+                        ? "1fr 1fr"
+                        : "1fr",
+                      gap: 8,
+                    }}
+                  >
+                    {order.pdf && (
+                      <button
+                        type="button"
+                        onClick={() => window.open(order.pdf)}
+                        style={{
+                          minHeight: 40,
+                          padding: "8px 12px",
+                          borderRadius: "var(--radius-small)",
+                          background: "var(--success)",
+                          color: "#ffffff",
+                          fontSize: 13,
+                          fontWeight: 800,
+                        }}
+                      >
+                        📄 פתח הזמנה
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleRestoreOrder(order)}
+                      style={{
+                        minHeight: 40,
+                        padding: "8px 12px",
+                        borderRadius: "var(--radius-small)",
+                        background: "var(--primary)",
+                        color: "#ffffff",
+                        fontSize: 13,
+                        fontWeight: 800,
+                      }}
+                    >
+                      ↩ החזר לסידור
+                    </button>
+                  </div>
+                </div>
+              </article>
             ))}
-          </div>
+          </section>
         )}
-      </div>
+      </main>
     </div>
   );
 }
