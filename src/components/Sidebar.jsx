@@ -168,28 +168,56 @@ export default function Sidebar({
     }
   };
 
+  const handleCardEnter = (
+    event,
+    isEditing
+  ) => {
+    if (isEditing) {
+      return;
+    }
+
+    event.currentTarget.style.transform =
+      "translateY(-2px)";
+
+    event.currentTarget.style.boxShadow =
+      "0 14px 30px rgba(15, 55, 95, 0.14)";
+
+    event.currentTarget.style.borderColor =
+      "#c8d8ea";
+  };
+
+  const handleCardLeave = (event) => {
+    event.currentTarget.style.transform =
+      "translateY(0)";
+
+    event.currentTarget.style.boxShadow =
+      "0 7px 20px rgba(15, 55, 95, 0.08)";
+
+    event.currentTarget.style.borderColor =
+      "#d9e4f0";
+  };
+
   return (
     <aside
       style={{
-        width: 270,
-        minWidth: 270,
+        width: 300,
+        minWidth: 300,
         height: "100%",
-        background: "var(--surface)",
-        borderLeft:
-          "1px solid var(--border)",
+        background:
+          "linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%)",
+        borderLeft: "1px solid #dbe4ef",
         display: "flex",
         flexDirection: "column",
         boxShadow:
-          "-4px 0 18px rgba(16, 24, 40, 0.04)",
+          "-8px 0 26px rgba(16, 24, 40, 0.05)",
         overflow: "hidden",
       }}
     >
       <div
         style={{
-          padding: "12px",
-          borderBottom:
-            "1px solid var(--border)",
-          background: "var(--surface)",
+          padding: "16px 15px 14px",
+          borderBottom: "1px solid #e1e8f1",
+          background: "#ffffff",
         }}
       >
         <button
@@ -197,17 +225,34 @@ export default function Sidebar({
           onClick={onSelectFiles}
           style={{
             width: "100%",
-            minHeight: 42,
-            padding: "9px 12px",
-            borderRadius:
-              "var(--radius-small)",
+            minHeight: 52,
+            padding: "12px 14px",
+            border: "none",
+            borderRadius: 15,
             background:
-              "linear-gradient(135deg, var(--primary), var(--primary-dark))",
+              "linear-gradient(135deg, #2368c9 0%, #0e3f83 100%)",
             color: "#ffffff",
-            fontWeight: 700,
-            fontSize: 14,
+            fontWeight: 900,
+            fontSize: 16,
             boxShadow:
-              "0 5px 14px rgba(18, 97, 201, 0.2)",
+              "0 9px 20px rgba(17, 79, 160, 0.24)",
+            cursor: "pointer",
+            transition:
+              "transform 0.18s ease, box-shadow 0.18s ease",
+          }}
+          onMouseEnter={(event) => {
+            event.currentTarget.style.transform =
+              "translateY(-2px)";
+
+            event.currentTarget.style.boxShadow =
+              "0 13px 25px rgba(17, 79, 160, 0.30)";
+          }}
+          onMouseLeave={(event) => {
+            event.currentTarget.style.transform =
+              "translateY(0)";
+
+            event.currentTarget.style.boxShadow =
+              "0 9px 20px rgba(17, 79, 160, 0.24)";
           }}
         >
           ＋ הוסף הזמנות PDF
@@ -215,20 +260,20 @@ export default function Sidebar({
 
         <div
           style={{
-            marginTop: 13,
+            marginTop: 20,
             display: "flex",
             alignItems: "center",
-            justifyContent:
-              "space-between",
-            gap: 8,
+            justifyContent: "space-between",
+            gap: 10,
           }}
         >
           <h2
             style={{
               margin: 0,
-              color: "var(--text-main)",
-              fontSize: 17,
-              fontWeight: 800,
+              color: "#142d4f",
+              fontSize: 22,
+              fontWeight: 950,
+              letterSpacing: "-0.2px",
             }}
           >
             הזמנות חדשות
@@ -236,17 +281,20 @@ export default function Sidebar({
 
           <div
             style={{
-              minWidth: 28,
-              height: 28,
-              padding: "0 8px",
+              minWidth: 40,
+              height: 40,
+              padding: "0 10px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              borderRadius: 8,
-              background: "var(--primary)",
+              borderRadius: 12,
+              background:
+                "linear-gradient(145deg, #2b72cf, #1354a3)",
               color: "#ffffff",
-              fontSize: 13,
-              fontWeight: 800,
+              fontSize: 17,
+              fontWeight: 950,
+              boxShadow:
+                "0 5px 12px rgba(25, 92, 174, 0.22)",
             }}
           >
             {orders.length}
@@ -256,9 +304,23 @@ export default function Sidebar({
         <div
           style={{
             position: "relative",
-            marginTop: 11,
+            marginTop: 15,
           }}
         >
+          <span
+            style={{
+              position: "absolute",
+              left: 13,
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#8190a5",
+              fontSize: 17,
+              pointerEvents: "none",
+            }}
+          >
+            🔍
+          </span>
+
           <input
             type="search"
             value={searchTerm}
@@ -270,24 +332,28 @@ export default function Sidebar({
             placeholder="חיפוש הזמנה..."
             style={{
               width: "100%",
-              height: 38,
-              padding: "8px 11px",
-              borderRadius:
-                "var(--radius-small)",
-              fontSize: 13,
+              height: 48,
+              padding: "10px 42px 10px 13px",
+              border: "1px solid #ccd8e7",
+              borderRadius: 14,
+              fontSize: 14,
+              fontWeight: 600,
               boxSizing: "border-box",
-              background:
-                "var(--surface-soft)",
+              color: "#2d405d",
+              background: "#ffffff",
+              outline: "none",
+              boxShadow:
+                "0 3px 10px rgba(17, 55, 95, 0.04)",
             }}
           />
         </div>
 
         <div
           style={{
-            marginTop: 7,
-            color:
-              "var(--text-secondary)",
-            fontSize: 11,
+            marginTop: 10,
+            color: "#75849a",
+            fontSize: 12,
+            fontWeight: 700,
           }}
         >
           מוצגות {filteredOrders.length} מתוך{" "}
@@ -299,32 +365,38 @@ export default function Sidebar({
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "10px",
+          padding: "14px",
         }}
       >
         {orders.length === 0 && (
           <div
             style={{
-              minHeight: 160,
+              minHeight: 190,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               textAlign: "center",
-              color: "var(--text-muted)",
-              border:
-                "1px dashed var(--border-dark)",
-              borderRadius:
-                "var(--radius-medium)",
+              color: "#8492a6",
+              border: "1.5px dashed #bdcada",
+              borderRadius: 17,
               background:
-                "var(--surface-soft)",
-              padding: 18,
+                "rgba(255, 255, 255, 0.72)",
+              padding: 20,
             }}
           >
             <div
               style={{
-                fontSize: 28,
-                marginBottom: 7,
+                width: 54,
+                height: 54,
+                marginBottom: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 15,
+                background: "#edf4fc",
+                color: "#245c9f",
+                fontSize: 26,
               }}
             >
               ▤
@@ -332,10 +404,9 @@ export default function Sidebar({
 
             <div
               style={{
-                color:
-                  "var(--text-secondary)",
-                fontSize: 13,
-                fontWeight: 700,
+                color: "#53667f",
+                fontSize: 14,
+                fontWeight: 850,
               }}
             >
               אין הזמנות חדשות
@@ -347,10 +418,11 @@ export default function Sidebar({
           filteredOrders.length === 0 && (
             <div
               style={{
-                marginTop: 30,
+                marginTop: 35,
                 textAlign: "center",
-                color: "var(--text-muted)",
-                fontSize: 13,
+                color: "#8592a4",
+                fontSize: 14,
+                fontWeight: 700,
               }}
             >
               לא נמצאו הזמנות
@@ -372,57 +444,39 @@ export default function Sidebar({
                 )
               }
               style={{
-                marginBottom: 8,
+                marginBottom: 14,
                 padding: isEditing
-                  ? 11
-                  : "10px 11px",
+                  ? 15
+                  : "16px 15px",
                 background:
-                  "var(--surface)",
-                border:
-                  "1px solid var(--border)",
-                borderRadius:
-                  "var(--radius-medium)",
+                  "linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)",
+                border: "1px solid #d9e4f0",
+                borderRadius: 18,
                 boxShadow:
-                  "var(--shadow-small)",
+                  "0 7px 20px rgba(15, 55, 95, 0.08)",
                 cursor: isEditing
                   ? "default"
                   : "grab",
                 transition:
                   "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
               }}
-              onMouseEnter={(event) => {
-                if (!isEditing) {
-                  event.currentTarget.style.transform =
-                    "translateY(-1px)";
-
-                  event.currentTarget.style.boxShadow =
-                    "var(--shadow-medium)";
-
-                  event.currentTarget.style.borderColor =
-                    "var(--border-dark)";
-                }
-              }}
-              onMouseLeave={(event) => {
-                event.currentTarget.style.transform =
-                  "translateY(0)";
-
-                event.currentTarget.style.boxShadow =
-                  "var(--shadow-small)";
-
-                event.currentTarget.style.borderColor =
-                  "var(--border)";
-              }}
+              onMouseEnter={(event) =>
+                handleCardEnter(
+                  event,
+                  isEditing
+                )
+              }
+              onMouseLeave={handleCardLeave}
             >
               {isEditing ? (
                 <>
                   <label
                     style={{
                       display: "block",
-                      marginBottom: 4,
-                      color:
-                        "var(--text-secondary)",
-                      fontSize: 11,
-                      fontWeight: 700,
+                      marginBottom: 5,
+                      color: "#66788f",
+                      fontSize: 12,
+                      fontWeight: 800,
                     }}
                   >
                     מספר הזמנה
@@ -438,24 +492,25 @@ export default function Sidebar({
                     }
                     style={{
                       width: "100%",
-                      height: 35,
-                      padding: "7px 9px",
-                      borderRadius: 7,
-                      boxSizing:
-                        "border-box",
-                      fontSize: 13,
+                      height: 42,
+                      padding: "8px 11px",
+                      border: "1px solid #ced9e6",
+                      borderRadius: 11,
+                      boxSizing: "border-box",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      background: "#ffffff",
                     }}
                   />
 
                   <label
                     style={{
                       display: "block",
-                      marginTop: 8,
-                      marginBottom: 4,
-                      color:
-                        "var(--text-secondary)",
-                      fontSize: 11,
-                      fontWeight: 700,
+                      marginTop: 11,
+                      marginBottom: 5,
+                      color: "#66788f",
+                      fontSize: 12,
+                      fontWeight: 800,
                     }}
                   >
                     שם לקוח
@@ -471,24 +526,25 @@ export default function Sidebar({
                     }
                     style={{
                       width: "100%",
-                      height: 35,
-                      padding: "7px 9px",
-                      borderRadius: 7,
-                      boxSizing:
-                        "border-box",
-                      fontSize: 13,
+                      height: 42,
+                      padding: "8px 11px",
+                      border: "1px solid #ced9e6",
+                      borderRadius: 11,
+                      boxSizing: "border-box",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      background: "#ffffff",
                     }}
                   />
 
                   <label
                     style={{
                       display: "block",
-                      marginTop: 8,
-                      marginBottom: 4,
-                      color:
-                        "var(--text-secondary)",
-                      fontSize: 11,
-                      fontWeight: 700,
+                      marginTop: 11,
+                      marginBottom: 5,
+                      color: "#66788f",
+                      fontSize: 12,
+                      fontWeight: 800,
                     }}
                   >
                     יעד
@@ -505,12 +561,14 @@ export default function Sidebar({
                     placeholder="לאן ההזמנה יוצאת?"
                     style={{
                       width: "100%",
-                      height: 35,
-                      padding: "7px 9px",
-                      borderRadius: 7,
-                      boxSizing:
-                        "border-box",
-                      fontSize: 13,
+                      height: 42,
+                      padding: "8px 11px",
+                      border: "1px solid #ced9e6",
+                      borderRadius: 11,
+                      boxSizing: "border-box",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      background: "#ffffff",
                     }}
                   />
 
@@ -519,8 +577,8 @@ export default function Sidebar({
                       display: "grid",
                       gridTemplateColumns:
                         "1fr 1fr",
-                      gap: 7,
-                      marginTop: 9,
+                      gap: 9,
+                      marginTop: 13,
                     }}
                   >
                     <button
@@ -529,14 +587,18 @@ export default function Sidebar({
                         saveEditing(order.id)
                       }
                       style={{
-                        minHeight: 34,
-                        padding: "7px 8px",
-                        borderRadius: 7,
+                        minHeight: 42,
+                        padding: "8px 10px",
+                        border: "none",
+                        borderRadius: 11,
                         background:
-                          "var(--primary)",
+                          "linear-gradient(180deg, #2c77d1, #1453a2)",
                         color: "#ffffff",
-                        fontSize: 12,
-                        fontWeight: 700,
+                        fontSize: 13,
+                        fontWeight: 900,
+                        cursor: "pointer",
+                        boxShadow:
+                          "0 5px 12px rgba(23, 84, 165, 0.20)",
                       }}
                     >
                       שמור
@@ -546,13 +608,18 @@ export default function Sidebar({
                       type="button"
                       onClick={cancelEditing}
                       style={{
-                        minHeight: 34,
-                        padding: "7px 8px",
-                        borderRadius: 7,
-                        background: "#687386",
+                        minHeight: 42,
+                        padding: "8px 10px",
+                        border: "none",
+                        borderRadius: 11,
+                        background:
+                          "linear-gradient(180deg, #8593a5, #667386)",
                         color: "#ffffff",
-                        fontSize: 12,
-                        fontWeight: 700,
+                        fontSize: 13,
+                        fontWeight: 900,
+                        cursor: "pointer",
+                        boxShadow:
+                          "0 5px 12px rgba(80, 95, 115, 0.16)",
                       }}
                     >
                       ביטול
@@ -564,11 +631,10 @@ export default function Sidebar({
                   <div
                     style={{
                       display: "flex",
-                      alignItems:
-                        "flex-start",
+                      alignItems: "flex-start",
                       justifyContent:
                         "space-between",
-                      gap: 8,
+                      gap: 12,
                     }}
                   >
                     <div
@@ -579,13 +645,13 @@ export default function Sidebar({
                     >
                       <div
                         style={{
-                          color:
-                            "var(--primary)",
-                          fontSize: 16,
-                          lineHeight: 1.2,
-                          fontWeight: 800,
+                          color: "#154f9b",
+                          fontSize: 22,
+                          lineHeight: 1.15,
+                          fontWeight: 950,
                           direction: "ltr",
                           textAlign: "right",
+                          letterSpacing: "0.2px",
                         }}
                       >
                         {order.orderNumber}
@@ -594,12 +660,11 @@ export default function Sidebar({
                       <div
                         title={order.customer}
                         style={{
-                          marginTop: 5,
-                          color:
-                            "var(--text-main)",
-                          fontSize: 13,
-                          lineHeight: 1.35,
-                          fontWeight: 600,
+                          marginTop: 8,
+                          color: "#243752",
+                          fontSize: 15,
+                          lineHeight: 1.4,
+                          fontWeight: 850,
                           overflow: "hidden",
                           textOverflow:
                             "ellipsis",
@@ -612,19 +677,20 @@ export default function Sidebar({
 
                     <div
                       style={{
-                        width: 31,
-                        height: 31,
-                        minWidth: 31,
+                        width: 48,
+                        height: 48,
+                        minWidth: 48,
                         display: "flex",
                         alignItems: "center",
                         justifyContent:
                           "center",
-                        borderRadius: 8,
+                        borderRadius: 14,
                         background:
-                          "var(--primary-light)",
-                        color:
-                          "var(--primary)",
-                        fontSize: 17,
+                          "linear-gradient(145deg, #edf5ff, #deecfb)",
+                        color: "#1d5ca5",
+                        fontSize: 22,
+                        boxShadow:
+                          "inset 0 0 0 1px rgba(30, 91, 162, 0.06)",
                       }}
                     >
                       ▤
@@ -633,12 +699,11 @@ export default function Sidebar({
 
                   <div
                     style={{
-                      marginTop: 8,
+                      marginTop: 12,
                       display: "flex",
                       alignItems: "center",
                       justifyContent:
-                        "space-between",
-                      gap: 7,
+                        "flex-start",
                     }}
                   >
                     <span
@@ -647,10 +712,9 @@ export default function Sidebar({
                         "לא הוגדר יעד"
                       }
                       style={{
-                        maxWidth: 145,
-                        display:
-                          "inline-block",
-                        padding: "4px 8px",
+                        maxWidth: "100%",
+                        display: "inline-block",
+                        padding: "7px 11px",
                         overflow: "hidden",
                         textOverflow:
                           "ellipsis",
@@ -658,16 +722,17 @@ export default function Sidebar({
                         borderRadius: 999,
                         background:
                           order.destination
-                            ? "var(--primary-light)"
-                            : "var(--surface-soft)",
+                            ? "#edf4ff"
+                            : "#f0f3f7",
                         color:
                           order.destination
-                            ? "var(--primary-dark)"
-                            : "var(--text-muted)",
-                        fontSize: 11,
-                        fontWeight: 700,
+                            ? "#3d6797"
+                            : "#7b8798",
+                        fontSize: 12,
+                        fontWeight: 850,
                       }}
                     >
+                      📍{" "}
                       {order.destination ||
                         "לא הוגדר יעד"}
                     </span>
@@ -677,9 +742,9 @@ export default function Sidebar({
                     style={{
                       display: "grid",
                       gridTemplateColumns:
-                        "1.25fr 1fr 1fr",
-                      gap: 6,
-                      marginTop: 9,
+                        "1fr 1fr 1fr",
+                      gap: 9,
+                      marginTop: 15,
                     }}
                   >
                     <button
@@ -688,18 +753,23 @@ export default function Sidebar({
                         handleOpenPdf(order)
                       }
                       style={{
-                        minHeight: 31,
-                        padding: "6px 7px",
-                        borderRadius: 7,
+                        minHeight: 46,
+                        padding: "8px 7px",
+                        border: "1px solid #bee5ca",
+                        borderRadius: 13,
                         background:
-                          "var(--success-light)",
-                        color:
-                          "var(--success)",
-                        fontSize: 11,
-                        fontWeight: 800,
+                          "linear-gradient(180deg, #f1fff5, #e6f8ec)",
+                        color: "#147a3c",
+                        fontSize: 13,
+                        fontWeight: 900,
+                        cursor: "pointer",
+                        boxShadow:
+                          "0 4px 10px rgba(30, 135, 70, 0.08)",
+                        transition:
+                          "transform 0.18s ease, box-shadow 0.18s ease",
                       }}
                     >
-                      פתח
+                      📄 פתח
                     </button>
 
                     <button
@@ -708,16 +778,23 @@ export default function Sidebar({
                         startEditing(order)
                       }
                       style={{
-                        minHeight: 31,
-                        padding: "6px 7px",
-                        borderRadius: 7,
-                        background: "#fff5dc",
-                        color: "#9a6300",
-                        fontSize: 11,
-                        fontWeight: 800,
+                        minHeight: 46,
+                        padding: "8px 7px",
+                        border: "1px solid #f1d79e",
+                        borderRadius: 13,
+                        background:
+                          "linear-gradient(180deg, #fffaf0, #fff3d9)",
+                        color: "#966000",
+                        fontSize: 13,
+                        fontWeight: 900,
+                        cursor: "pointer",
+                        boxShadow:
+                          "0 4px 10px rgba(160, 103, 0, 0.08)",
+                        transition:
+                          "transform 0.18s ease, box-shadow 0.18s ease",
                       }}
                     >
-                      ערוך
+                      ✏️ ערוך
                     </button>
 
                     <button
@@ -726,18 +803,23 @@ export default function Sidebar({
                         handleDelete(order)
                       }
                       style={{
-                        minHeight: 31,
-                        padding: "6px 7px",
-                        borderRadius: 7,
+                        minHeight: 46,
+                        padding: "8px 7px",
+                        border: "1px solid #f3c1c7",
+                        borderRadius: 13,
                         background:
-                          "var(--danger-light)",
-                        color:
-                          "var(--danger)",
-                        fontSize: 11,
-                        fontWeight: 800,
+                          "linear-gradient(180deg, #fff4f5, #ffe9eb)",
+                        color: "#bd2434",
+                        fontSize: 13,
+                        fontWeight: 900,
+                        cursor: "pointer",
+                        boxShadow:
+                          "0 4px 10px rgba(190, 35, 52, 0.08)",
+                        transition:
+                          "transform 0.18s ease, box-shadow 0.18s ease",
                       }}
                     >
-                      מחק
+                      🗑 מחק
                     </button>
                   </div>
                 </>

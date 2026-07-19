@@ -1,10 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   addRouteToTruck,
   deleteRouteFromTruck,
   moveRouteInTruck,
 } from "./useRoutes";
+
+import {
+  loadDispatchData as loadCloudDispatchData,
+  saveDispatchData as saveCloudDispatchData,
+  subscribeToDispatchData,
+} from "../services/dispatchApi";
 
 const STORAGE_KEY = "taha-dispatch-data-v1";
 
@@ -312,6 +318,23 @@ const updateOrderInTrucks = (
   }));
 };
 
+const hasMeaningfulDispatchData = (data) => {
+  if (!data || typeof data !== "object") {
+    return false;
+  }
+
+  const hasOrders = Array.isArray(data.orders) && data.orders.length > 0;
+  const hasCompletedOrders =
+    Array.isArray(data.completedOrders) &&
+    data.completedOrders.length > 0;
+  const hasPlans =
+    data.plans &&
+    typeof data.plans === "object" &&
+    Object.keys(data.plans).length > 0;
+
+  return hasOrders || hasCompletedOrders || hasPlans;
+};
+
 export default function useDispatch(selectedDate) {
   const activeDate = selectedDate || createDateKey();
 
@@ -323,6 +346,14 @@ export default function useDispatch(selectedDate) {
       createDateKey()
     );
   });
+
+  const dispatchDataRef = useRef(dispatchData);
+  const cloudReadyRef = useRef(false);
+  const lastCloudSnapshotRef = useRef("");
+
+  useEffect(() => {
+    dispatchDataRef.current = dispatchData;
+  }, [dispatchData]);
 
   const orders = dispatchData.orders;
 
@@ -337,15 +368,120 @@ export default function useDispatch(selectedDate) {
     createDefaultTrucks();
 
   useEffect(() => {
+    const snapshot = JSON.stringify(dispatchData);
+
     try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(dispatchData)
-      );
+      localStorage.setItem(STORAGE_KEY, snapshot);
     } catch (error) {
-      console.error("Failed to save dispatch data:", error);
+      console.error("Failed to save local dispatch data:", error);
     }
+
+    if (
+      !cloudReadyRef.current ||
+      snapshot === lastCloudSnapshotRef.current
+    ) {
+      return undefined;
+    }
+
+    const saveTimeout = window.setTimeout(async () => {
+      try {
+        await saveCloudDispatchData(dispatchData);
+        lastCloudSnapshotRef.current = snapshot;
+      } catch (error) {
+        console.error("Failed to save cloud dispatch data:", error);
+      }
+    }, 350);
+
+    return () => window.clearTimeout(saveTimeout);
   }, [dispatchData]);
+
+  useEffect(() => {
+    let isActive = true;
+    let unsubscribe = () => {};
+
+    const initializeCloudSync = async () => {
+      try {
+        const cloudData = await loadCloudDispatchData();
+
+        if (!isActive) {
+          return;
+        }
+
+        const localData = dispatchDataRef.current;
+        const cloudHasData = hasMeaningfulDispatchData(cloudData);
+        const localHasData = hasMeaningfulDispatchData(localData);
+
+        if (cloudHasData) {
+          const normalizedCloudData =
+            closePreviousDaysAutomatically(
+              cloudData,
+              createDateKey()
+            );
+
+          const cloudSnapshot = JSON.stringify(
+            normalizedCloudData
+          );
+
+          lastCloudSnapshotRef.current = cloudSnapshot;
+          dispatchDataRef.current = normalizedCloudData;
+          setDispatchData(normalizedCloudData);
+        } else if (localHasData) {
+          await saveCloudDispatchData(localData);
+          lastCloudSnapshotRef.current = JSON.stringify(localData);
+        } else {
+          lastCloudSnapshotRef.current = JSON.stringify(cloudData);
+        }
+
+        if (!isActive) {
+          return;
+        }
+
+        cloudReadyRef.current = true;
+
+        unsubscribe = subscribeToDispatchData((nextCloudData) => {
+          if (!isActive) {
+            return;
+          }
+
+          const normalizedCloudData =
+            closePreviousDaysAutomatically(
+              nextCloudData,
+              createDateKey()
+            );
+
+          const nextSnapshot = JSON.stringify(
+            normalizedCloudData
+          );
+
+          if (nextSnapshot === lastCloudSnapshotRef.current) {
+            return;
+          }
+
+          lastCloudSnapshotRef.current = nextSnapshot;
+
+          if (
+            nextSnapshot ===
+            JSON.stringify(dispatchDataRef.current)
+          ) {
+            return;
+          }
+
+          dispatchDataRef.current = normalizedCloudData;
+          setDispatchData(normalizedCloudData);
+        });
+      } catch (error) {
+        console.error("Failed to initialize Supabase sync:", error);
+      }
+    };
+
+    initializeCloudSync();
+
+    return () => {
+      isActive = false;
+      cloudReadyRef.current = false;
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     let midnightTimeout;
