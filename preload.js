@@ -6,4 +6,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   openPdf: (filePath) =>
     ipcRenderer.invoke("open-pdf", filePath),
+
+  saveBackup: (backupData) =>
+    ipcRenderer.invoke("save-backup", backupData),
+
+  selectBackup: () =>
+    ipcRenderer.invoke("select-backup"),
 });

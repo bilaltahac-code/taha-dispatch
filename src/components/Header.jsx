@@ -7,7 +7,7 @@ export default function Header() {
         <div className="app-header__logo-wrapper">
           <img
             className="app-header__logo"
-            src="/taha-logo.png"
+            src="./taha-logo.png"
             alt="מוצרי בטון טאהא"
           />
         </div>
