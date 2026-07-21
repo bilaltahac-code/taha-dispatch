@@ -31,6 +31,26 @@ function createWindow() {
     mainWindow.show();
   });
 
+  mainWindow.webContents.setWindowOpenHandler(
+    ({ url }) => {
+      if (
+        typeof url === "string" &&
+        /^https?:\/\//i.test(url)
+      ) {
+        shell.openExternal(url).catch((error) => {
+          console.error(
+            "Failed to open external URL:",
+            error
+          );
+        });
+      }
+
+      return {
+        action: "deny",
+      };
+    }
+  );
+
   if (app.isPackaged) {
     mainWindow.loadFile(
       path.join(__dirname, "dist", "index.html")
@@ -100,20 +120,34 @@ ipcMain.handle(
 
 ipcMain.handle(
   "open-pdf",
-  async (event, filePath) => {
+  async (event, pdfSource) => {
     try {
       if (
-        !filePath ||
-        typeof filePath !== "string" ||
-        !fs.existsSync(filePath)
+        !pdfSource ||
+        typeof pdfSource !== "string"
       ) {
+        return {
+          success: false,
+          error: "PDF source was not found",
+        };
+      }
+
+      if (/^https?:\/\//i.test(pdfSource)) {
+        await shell.openExternal(pdfSource);
+
+        return {
+          success: true,
+        };
+      }
+
+      if (!fs.existsSync(pdfSource)) {
         return {
           success: false,
           error: "PDF file was not found",
         };
       }
 
-      const result = await shell.openPath(filePath);
+      const result = await shell.openPath(pdfSource);
 
       if (result) {
         return {

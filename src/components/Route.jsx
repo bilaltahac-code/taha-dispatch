@@ -92,7 +92,13 @@ export default function Route({
 
   const handleOpenPdf = async (order) => {
     try {
-      if (!order.pdf) {
+      const pdfSource =
+        order.pdfUrl ||
+        order.pdf ||
+        order.localPdfPath ||
+        "";
+
+      if (!pdfSource) {
         window.alert(
           "לא נמצא קובץ PDF להזמנה"
         );
@@ -100,25 +106,38 @@ export default function Route({
         return;
       }
 
-      if (!window.electronAPI?.openPdf) {
-        window.alert(
-          "לא ניתן לפתוח את קובץ ה-PDF"
+      if (window.electronAPI?.openPdf) {
+        const result =
+          await window.electronAPI.openPdf(
+            pdfSource
+          );
+
+        if (result?.success === false) {
+          window.alert(
+            result.error ||
+              "לא ניתן לפתוח את קובץ ה-PDF"
+          );
+        }
+
+        return;
+      }
+
+      if (
+        typeof pdfSource === "string" &&
+        /^https?:\/\//i.test(pdfSource)
+      ) {
+        window.open(
+          pdfSource,
+          "_blank",
+          "noopener,noreferrer"
         );
 
         return;
       }
 
-      const result =
-        await window.electronAPI.openPdf(
-          order.pdf
-        );
-
-      if (result?.success === false) {
-        window.alert(
-          result.error ||
-            "לא ניתן לפתוח את קובץ ה-PDF"
-        );
-      }
+      window.alert(
+        "לא ניתן לפתוח את קובץ ה-PDF"
+      );
     } catch (error) {
       console.error(
         "Failed to open PDF:",
@@ -130,7 +149,6 @@ export default function Route({
       );
     }
   };
-
 
 
   return (

@@ -33,7 +33,10 @@ const createSafePdfName = (fileName, orderNumber) => {
 
   const timestamp = Date.now();
 
-  return `${cleanOrderNumber}-${timestamp}-${cleanOriginalName}`;
+ const extension =
+  (fileName.split(".").pop() || "pdf").toLowerCase();
+
+return `${cleanOrderNumber}-${timestamp}.${extension}`;
 };
 
 const createCloudPdfPath = (fileName, orderNumber) => {
@@ -549,131 +552,27 @@ export default function Dashboard() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 10,
+                justifyContent: "flex-start",
                 marginBottom: 14,
-                padding: "10px 12px",
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-medium)",
-                boxShadow: "var(--shadow-small)",
               }}
             >
-              <div
+              <button
+                type="button"
+                onClick={() => setCurrentPage("completed")}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  flexWrap: "wrap",
+                  minHeight: 40,
+                  padding: "8px 18px",
+                  borderRadius: "var(--radius-small)",
+                  background: "var(--success)",
+                  color: "#ffffff",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  boxShadow:
+                    "0 4px 10px rgba(24, 134, 75, 0.18)",
                 }}
               >
-                <button
-                  type="button"
-                  onClick={handleExportBackup}
-                  disabled={isBackupBusy}
-                  style={{
-                    minHeight: 40,
-                    padding: "8px 14px",
-                    borderRadius: "var(--radius-small)",
-                    border: "1px solid var(--border)",
-                    background: "var(--surface)",
-                    color: "var(--text)",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    opacity: isBackupBusy ? 0.65 : 1,
-                    cursor: isBackupBusy ? "wait" : "pointer",
-                  }}
-                >
-                  💾 גיבוי
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleImportBackup}
-                  disabled={isBackupBusy}
-                  style={{
-                    minHeight: 40,
-                    padding: "8px 14px",
-                    borderRadius: "var(--radius-small)",
-                    border: "1px solid var(--border)",
-                    background: "var(--surface)",
-                    color: "var(--text)",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    opacity: isBackupBusy ? 0.65 : 1,
-                    cursor: isBackupBusy ? "wait" : "pointer",
-                  }}
-                >
-                  📂 שחזור
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage("completed")}
-                  style={{
-                    minHeight: 40,
-                    padding: "8px 18px",
-                    borderRadius: "var(--radius-small)",
-                    background: "var(--success)",
-                    color: "#ffffff",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    boxShadow:
-                      "0 4px 10px rgba(24, 134, 75, 0.18)",
-                  }}
-                >
-                  ✅ הזמנות שהושלמו ({completedOrders.length})
-                </button>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  gap: 8,
-                  flexWrap: "wrap",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={handleEditorNameChange}
-                  title="שינוי שם המשתמש במכשיר הזה"
-                  style={{
-                    minHeight: 38,
-                    padding: "7px 12px",
-                    borderRadius: "var(--radius-small)",
-                    border: "1px solid var(--border)",
-                    background: "var(--surface)",
-                    color: "var(--text)",
-                    fontWeight: 700,
-                    fontSize: 13,
-                  }}
-                >
-                  👤{" "}
-                  {getEditorName(dispatchEditor)}
-                </button>
-
-                <div
-                  style={{
-                    minHeight: 38,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 7,
-                    padding: "7px 12px",
-                    borderRadius: "var(--radius-small)",
-                    border: `1px solid ${syncDisplay.border}`,
-                    background: syncDisplay.background,
-                    color: syncDisplay.color,
-                    fontWeight: 700,
-                    fontSize: 13,
-                  }}
-                >
-                  <span>{syncDisplay.icon}</span>
-                  <span>{syncDisplay.label}</span>
-                </div>
-              </div>
+                ✅ הזמנות שהושלמו ({completedOrders.length})
+              </button>
             </div>
 
             {lastEditor && (

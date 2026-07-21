@@ -128,45 +128,37 @@ export default function Sidebar({
   };
 
   const handleOpenPdf = async (order) => {
-    try {
-      if (!order.pdf) {
-        window.alert(
-          "לא נמצא קובץ PDF להזמנה"
-        );
-
-        return;
-      }
-
-      if (!window.electronAPI?.openPdf) {
-        window.alert(
-          "לא ניתן לפתוח את קובץ ה-PDF"
-        );
-
-        return;
-      }
-
-      const result =
-        await window.electronAPI.openPdf(
-          order.pdf
-        );
-
-      if (result?.success === false) {
-        window.alert(
-          result.error ||
-            "לא ניתן לפתוח את קובץ ה-PDF"
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Failed to open PDF:",
-        error
-      );
-
-      window.alert(
-        "לא ניתן לפתוח את קובץ ה-PDF"
-      );
+  try {
+    if (!order.pdf) {
+      window.alert("לא נמצא קובץ PDF להזמנה");
+      return;
     }
-  };
+
+    // إذا كان رابط Supabase افتحه بالمتصفح
+    if (
+      typeof order.pdf === "string" &&
+      order.pdf.startsWith("http")
+    ) {
+      window.open(order.pdf, "_blank");
+      return;
+    }
+
+    // إذا كان ملف محلي افتحه بالإلكترون
+    if (!window.electronAPI?.openPdf) {
+      window.alert("לא ניתן לפתוח את קובץ ה-PDF");
+      return;
+    }
+
+    const result = await window.electronAPI.openPdf(order.pdf);
+
+    if (result?.success === false) {
+      window.alert(result.error || "לא ניתן לפתוח את קובץ ה-PDF");
+    }
+  } catch (error) {
+    console.error(error);
+    window.alert("לא ניתן לפתוח את קובץ ה-PDF");
+  }
+};
 
   const handleCardEnter = (
     event,
