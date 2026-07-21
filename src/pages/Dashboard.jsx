@@ -10,6 +10,7 @@ import CompletedOrders from "./CompletedOrders";
 import { readPdf } from "../utils/pdfReader";
 import { parseOrder } from "../utils/parser";
 import useDispatch from "../hooks/useDispatch";
+import { supabase } from "../lib/supabase";
 
 const createTodayKey = () => {
   const date = new Date();
@@ -33,6 +34,41 @@ const createSafePdfName = (fileName, orderNumber) => {
   const timestamp = Date.now();
 
   return `${cleanOrderNumber}-${timestamp}-${cleanOriginalName}`;
+};
+
+const createCloudPdfPath = (fileName, orderNumber) => {
+  const safeFileName = createSafePdfName(fileName, orderNumber);
+
+  return `orders/${safeFileName}`;
+};
+
+const uploadPdfToCloud = async (file, orderNumber) => {
+  const cloudPath = createCloudPdfPath(file.name, orderNumber);
+
+  const { error: uploadError } = await supabase.storage
+    .from("pdfs")
+    .upload(cloudPath, file, {
+      cacheControl: "3600",
+      contentType: file.type || "application/pdf",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { data } = supabase.storage
+    .from("pdfs")
+    .getPublicUrl(cloudPath);
+
+  if (!data?.publicUrl) {
+    throw new Error("Supabase did not return a public PDF URL");
+  }
+
+  return {
+    cloudPath,
+    publicUrl: data.publicUrl,
+  };
 };
 
 const formatEditorTime = (metadata) => {
@@ -228,29 +264,39 @@ export default function Dashboard() {
 
     for (const file of files) {
       try {
-        if (!window.electronAPI?.savePdf) {
-          throw new Error("Electron API is not available");
-        }
-
         const text = await readPdf(file);
         const data = parseOrder(text);
 
-        const fileBuffer = await file.arrayBuffer();
-
-        const savedFileName = createSafePdfName(
-          file.name,
+        const cloudResult = await uploadPdfToCloud(
+          file,
           data.orderNumber
         );
 
-        const saveResult = await window.electronAPI.savePdf(
-          fileBuffer,
-          savedFileName
-        );
+        let localPdfPath = "";
 
-        if (!saveResult?.success || !saveResult.filePath) {
-          throw new Error(
-            saveResult?.error || "Failed to save PDF"
-          );
+        if (window.electronAPI?.savePdf) {
+          try {
+            const fileBuffer = await file.arrayBuffer();
+
+            const savedFileName = createSafePdfName(
+              file.name,
+              data.orderNumber
+            );
+
+            const saveResult = await window.electronAPI.savePdf(
+              fileBuffer,
+              savedFileName
+            );
+
+            if (saveResult?.success && saveResult.filePath) {
+              localPdfPath = saveResult.filePath;
+            }
+          } catch (localSaveError) {
+            console.warn(
+              "PDF uploaded to Supabase but local save failed:",
+              localSaveError
+            );
+          }
         }
 
         parsedOrders.push({
@@ -258,13 +304,16 @@ export default function Dashboard() {
           orderNumber: data.orderNumber,
           customer: data.customer,
           destination: "",
-          pdf: saveResult.filePath,
+          pdf: cloudResult.publicUrl,
+          pdfUrl: cloudResult.publicUrl,
+          pdfStoragePath: cloudResult.cloudPath,
+          localPdfPath,
         });
       } catch (error) {
-        console.error("Failed to read or save PDF:", error);
+        console.error("Failed to read or upload PDF:", error);
 
         window.alert(
-          `לא ניתן לקרוא או לשמור את הקובץ: ${file.name}`
+          `לא ניתן לקרוא או להעלות את הקובץ: ${file.name}`
         );
       }
     }
